@@ -1,4 +1,4 @@
-import logo from "@/assets/fni-logo.png";
+import logo from "@/assets/fni-owl-white.png";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
