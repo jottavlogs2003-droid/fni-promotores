@@ -5,7 +5,7 @@ import { DesktopLayout } from "@/components/layouts/DesktopLayout";
 import { StatCard } from "@/components/StatCard";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText } from "lucide-react";
+import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText, Receipt } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const items = [
@@ -13,6 +13,7 @@ const items = [
   { to: "/app/lojas", label: "Lojas", icon: Store },
   { to: "/app/execucoes", label: "Execuções", icon: Camera },
   { to: "/app/rupturas", label: "Rupturas", icon: AlertTriangle },
+  { to: "/app/faturas", label: "Faturas", icon: Receipt },
   { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
 
