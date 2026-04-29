@@ -449,15 +449,90 @@ function HistoricoPage() {
   );
 }
 
+function AgendaPage() {
+  const { user } = useAuth();
+  const [escalas, setEscalas] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("escalas").select("*, lojas(nome, cidade, endereco)").eq("promotor_id", user.id).gte("data", new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10)).order("data").then(({ data }) => setEscalas(data ?? []));
+  }, [user]);
+  const hoje = new Date().toISOString().slice(0, 10);
+  return (
+    <div className="space-y-4 animate-fade-in-up">
+      <h1 className="text-2xl font-display font-bold">Minha agenda</h1>
+      {escalas.length === 0 ? (
+        <Card className="p-8 text-center text-sm text-foreground/60">Nenhum turno agendado.</Card>
+      ) : escalas.map(e => (
+        <Card key={e.id} className={`p-4 ${e.data === hoje ? "border-primary border-2" : ""}`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs uppercase tracking-wider text-foreground/60 font-semibold">
+                {new Date(e.data + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}
+                {e.data === hoje && <span className="ml-2 text-primary">· HOJE</span>}
+              </p>
+              <p className="font-bold text-base mt-1">{e.lojas?.nome}</p>
+              <p className="text-xs text-foreground/70">{e.lojas?.endereco} — {e.lojas?.cidade}</p>
+              <p className="text-sm mt-2 font-semibold">{e.hora_inicio?.slice(0,5)} → {e.hora_fim?.slice(0,5)} <span className="text-foreground/60 font-normal">({e.duracao_horas}h · {Number(e.diarias).toFixed(1)} diária)</span></p>
+            </div>
+            <Badge className={
+              e.status === "concluido" ? "bg-success text-success-foreground" :
+              e.status === "em_andamento" ? "bg-warning text-warning-foreground" :
+              "bg-secondary text-secondary-foreground"
+            }>{e.status}</Badge>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function MeusPagamentos() {
+  const { user } = useAuth();
+  const [pags, setPags] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("pagamentos_promotores").select("*").eq("promotor_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setPags(data ?? []));
+  }, [user]);
+  const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const total = pags.reduce((s, p) => s + Number(p.valor_total || 0), 0);
+  const pendente = pags.filter(p => p.status === "pendente").reduce((s, p) => s + Number(p.valor_total || 0), 0);
+  return (
+    <div className="space-y-4 animate-fade-in-up">
+      <h1 className="text-2xl font-display font-bold">Meus pagamentos</h1>
+      <Card className="p-5 gradient-hero text-white border-0">
+        <p className="text-xs uppercase text-white/70 font-semibold">A receber</p>
+        <p className="text-3xl font-bold mt-1">{BRL(pendente)}</p>
+        <p className="text-xs text-white/70 mt-2">Total acumulado: {BRL(total)}</p>
+      </Card>
+      {pags.length === 0 ? (
+        <Card className="p-6 text-center text-sm text-foreground/60">Nenhum pagamento ainda.</Card>
+      ) : pags.map(p => (
+        <Card key={p.id} className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-bold">{BRL(Number(p.valor_total))}</p>
+              <p className="text-xs text-foreground/70">{p.periodo_inicio} → {p.periodo_fim} · {Number(p.total_diarias).toFixed(1)} diárias</p>
+              {Number(p.horas_extras) > 0 && <p className="text-xs text-foreground/70">+ {Number(p.horas_extras).toFixed(1)}h extras = {BRL(Number(p.valor_extras))}</p>}
+            </div>
+            <Badge className={p.status === "pago" ? "bg-success text-success-foreground" : "bg-warning text-warning-foreground"}>{p.status}</Badge>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export default function PromotorApp() {
   return (
     <MobileAppLayout items={items}>
       <Routes>
         <Route index element={<PromotorHome />} />
+        <Route path="agenda" element={<AgendaPage />} />
         <Route path="checkin" element={<CheckInPage />} />
         <Route path="execucao" element={<ExecucaoPage />} />
         <Route path="ruptura-validade" element={<RupturaValidadePage />} />
         <Route path="historico" element={<HistoricoPage />} />
+        <Route path="pagamentos" element={<MeusPagamentos />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </MobileAppLayout>
