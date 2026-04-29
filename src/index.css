@@ -45,18 +45,18 @@
     --destructive: 0 84% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 18% 88%;
-    --input: 220 18% 90%;
-    --ring: 354 78% 52%;
+    --border: 226 45% 50%;
+    --input: 226 50% 32%;
+    --ring: 204 92% 60%;
 
     --radius: 0.875rem;
 
     /* Gradients */
-    --gradient-brand: linear-gradient(135deg, hsl(354 78% 52%), hsl(204 88% 53%));
-    --gradient-brand-soft: linear-gradient(135deg, hsl(354 78% 52% / 0.1), hsl(204 88% 53% / 0.1));
-    --gradient-hero: linear-gradient(135deg, hsl(218 70% 18%) 0%, hsl(218 70% 12%) 50%, hsl(354 78% 35%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(354 78% 52%), hsl(354 88% 62%));
-    --gradient-secondary: linear-gradient(135deg, hsl(204 88% 53%), hsl(204 88% 63%));
+    --gradient-brand: linear-gradient(135deg, hsl(354 78% 56%), hsl(204 92% 60%));
+    --gradient-brand-soft: linear-gradient(135deg, hsl(354 78% 56% / 0.15), hsl(204 92% 60% / 0.15));
+    --gradient-hero: linear-gradient(135deg, hsl(226 71% 24%) 0%, hsl(226 71% 38%) 50%, hsl(226 80% 48%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(354 78% 56%), hsl(354 88% 66%));
+    --gradient-secondary: linear-gradient(135deg, hsl(204 92% 60%), hsl(204 92% 70%));
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(222 35% 12% / 0.05);
