@@ -30,7 +30,7 @@ export default function Auth() {
   if (loading) {
     return <div className="min-h-screen grid place-items-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/app" replace />;
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -42,7 +42,7 @@ export default function Auth() {
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Bem-vindo!");
-    navigate("/");
+    navigate("/app");
   }
 
   async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
@@ -57,7 +57,7 @@ export default function Auth() {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}/app`,
         data: { nome: parsed.data.nome },
       },
     });

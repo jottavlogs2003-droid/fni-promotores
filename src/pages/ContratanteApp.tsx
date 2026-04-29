@@ -115,7 +115,7 @@ export default function ContratanteApp() {
             <Card className="p-6 text-sm text-muted-foreground">Relatórios consolidados de performance e execução serão entregues na próxima iteração.</Card>
           </div>
         } />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </DesktopLayout>
   );

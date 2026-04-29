@@ -457,7 +457,7 @@ export default function PromotorApp() {
         <Route path="/execucao" element={<ExecucaoPage />} />
         <Route path="/ruptura-validade" element={<RupturaValidadePage />} />
         <Route path="/historico" element={<HistoricoPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </MobileAppLayout>
   );
