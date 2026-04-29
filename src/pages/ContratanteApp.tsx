@@ -9,11 +9,11 @@ import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText } from "
 import { useAuth } from "@/hooks/useAuth";
 
 const items = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/lojas", label: "Lojas", icon: Store },
-  { to: "/execucoes", label: "Execuções", icon: Camera },
-  { to: "/rupturas", label: "Rupturas", icon: AlertTriangle },
-  { to: "/relatorios", label: "Relatórios", icon: FileText },
+  { to: "/app", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/app/lojas", label: "Lojas", icon: Store },
+  { to: "/app/execucoes", label: "Execuções", icon: Camera },
+  { to: "/app/rupturas", label: "Rupturas", icon: AlertTriangle },
+  { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
 
 function ContratanteDashboard() {
@@ -105,17 +105,17 @@ export default function ContratanteApp() {
   return (
     <DesktopLayout items={items} title="Contratante">
       <Routes>
-        <Route path="/" element={<ContratanteDashboard />} />
-        <Route path="/lojas" element={<GenericTable title="Suas lojas" table="lojas" columns={[{ key: "nome", label: "Nome" }, { key: "cidade", label: "Cidade" }, { key: "estado", label: "UF" }]} />} />
-        <Route path="/execucoes" element={<GenericTable title="Execuções" table="execucoes" columns={[{ key: "loja", label: "Loja" }, { key: "score", label: "Score" }, { key: "observacoes", label: "Observações" }, { key: "created_at", label: "Quando" }]} />} />
-        <Route path="/rupturas" element={<GenericTable title="Rupturas" table="rupturas" columns={[{ key: "produto", label: "Produto" }, { key: "loja", label: "Loja" }, { key: "quantidade_atual", label: "Qtd" }, { key: "status", label: "Status" }, { key: "created_at", label: "Quando" }]} />} />
-        <Route path="/relatorios" element={
+        <Route index element={<ContratanteDashboard />} />
+        <Route path="lojas" element={<GenericTable title="Suas lojas" table="lojas" columns={[{ key: "nome", label: "Nome" }, { key: "cidade", label: "Cidade" }, { key: "estado", label: "UF" }]} />} />
+        <Route path="execucoes" element={<GenericTable title="Execuções" table="execucoes" columns={[{ key: "loja", label: "Loja" }, { key: "score", label: "Score" }, { key: "observacoes", label: "Observações" }, { key: "created_at", label: "Quando" }]} />} />
+        <Route path="rupturas" element={<GenericTable title="Rupturas" table="rupturas" columns={[{ key: "produto", label: "Produto" }, { key: "loja", label: "Loja" }, { key: "quantidade_atual", label: "Qtd" }, { key: "status", label: "Status" }, { key: "created_at", label: "Quando" }]} />} />
+        <Route path="relatorios" element={
           <div className="space-y-4 animate-fade-in-up">
             <h1 className="text-3xl font-display font-bold">Relatórios</h1>
             <Card className="p-6 text-sm text-muted-foreground">Relatórios consolidados de performance e execução serão entregues na próxima iteração.</Card>
           </div>
         } />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </DesktopLayout>
   );

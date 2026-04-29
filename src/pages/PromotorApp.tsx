@@ -10,10 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 
 const items = [
-  { to: "/", label: "Início", icon: Home },
-  { to: "/checkin", label: "Check-in", icon: MapPin },
-  { to: "/execucao", label: "Execução", icon: ListChecks },
-  { to: "/historico", label: "Histórico", icon: Calendar },
+  { to: "/app", label: "Início", icon: Home },
+  { to: "/app/checkin", label: "Check-in", icon: MapPin },
+  { to: "/app/execucao", label: "Execução", icon: ListChecks },
+  { to: "/app/historico", label: "Histórico", icon: Calendar },
 ];
 
 function PromotorHome() {
@@ -51,7 +51,7 @@ function PromotorHome() {
         <h1 className="text-2xl font-display font-bold mt-1">Pronto para a rota?</h1>
         <p className="text-white/80 text-sm mt-1">Bata seu ponto e comece a execução em loja.</p>
         <Button asChild variant="brand" size="lg" className="mt-4 w-full">
-          <Link to="/checkin"><MapPin className="h-5 w-5" /> Bater ponto agora</Link>
+          <Link to="/app/checkin"><MapPin className="h-5 w-5" /> Bater ponto agora</Link>
         </Button>
       </Card>
 
@@ -83,7 +83,7 @@ function PromotorHome() {
               <p className="font-semibold text-sm">Check-in em andamento</p>
               <p className="text-xs text-muted-foreground truncate">{ultimoCheckIn.lojas?.nome}</p>
             </div>
-            <Button asChild size="sm" variant="outline"><Link to="/execucao">Continuar</Link></Button>
+            <Button asChild size="sm" variant="outline"><Link to="/app/execucao">Continuar</Link></Button>
           </div>
         </Card>
       )}
@@ -169,7 +169,7 @@ function CheckInPage() {
         distancia_metros: dist,
       });
       if (insErr) throw insErr;
-      window.location.href = "/execucao";
+      window.location.href = "/app/execucao";
     } catch (err: any) {
       setError(err.message);
     } finally { setBusy(false); }
@@ -261,10 +261,10 @@ function ExecucaoPage() {
           hora_saida: new Date().toISOString(),
           latitude_saida: pos.coords.latitude, longitude_saida: pos.coords.longitude,
         }).eq("id", openCheckIn.id);
-        window.location.href = "/";
+        window.location.href = "/app";
       }, async () => {
         await supabase.from("check_ins").update({ hora_saida: new Date().toISOString() }).eq("id", openCheckIn.id);
-        window.location.href = "/";
+        window.location.href = "/app";
       });
     } finally { setBusy(false); }
   }
@@ -276,7 +276,7 @@ function ExecucaoPage() {
         <Card className="p-8 text-center">
           <ListChecks className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-sm text-muted-foreground">Você precisa fazer check-in em uma loja antes de iniciar a execução.</p>
-          <Button asChild variant="brand" className="mt-4"><Link to="/checkin">Bater ponto</Link></Button>
+          <Button asChild variant="brand" className="mt-4"><Link to="/app/checkin">Bater ponto</Link></Button>
         </Card>
       </div>
     );
@@ -328,7 +328,7 @@ function ExecucaoPage() {
       </Card>
 
       <div className="grid grid-cols-2 gap-2">
-        <Button asChild variant="outline" size="lg"><Link to="/ruptura-validade">Ruptura/Validade</Link></Button>
+        <Button asChild variant="outline" size="lg"><Link to="/app/ruptura-validade">Ruptura/Validade</Link></Button>
         <Button onClick={handleFinalizar} disabled={busy} variant="brand" size="lg">
           {busy ? "Salvando..." : "Finalizar"}
         </Button>
@@ -452,12 +452,12 @@ export default function PromotorApp() {
   return (
     <MobileAppLayout items={items}>
       <Routes>
-        <Route path="/" element={<PromotorHome />} />
-        <Route path="/checkin" element={<CheckInPage />} />
-        <Route path="/execucao" element={<ExecucaoPage />} />
-        <Route path="/ruptura-validade" element={<RupturaValidadePage />} />
-        <Route path="/historico" element={<HistoricoPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route index element={<PromotorHome />} />
+        <Route path="checkin" element={<CheckInPage />} />
+        <Route path="execucao" element={<ExecucaoPage />} />
+        <Route path="ruptura-validade" element={<RupturaValidadePage />} />
+        <Route path="historico" element={<HistoricoPage />} />
+        <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </MobileAppLayout>
   );

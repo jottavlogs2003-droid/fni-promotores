@@ -13,14 +13,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 
 const items = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/promotores", label: "Promotores", icon: Users },
-  { to: "/clientes", label: "Clientes", icon: Building2 },
-  { to: "/lojas", label: "Lojas", icon: Store },
-  { to: "/produtos", label: "Produtos", icon: Package },
-  { to: "/campanhas", label: "Campanhas", icon: Megaphone },
-  { to: "/monitoramento", label: "Monitoramento", icon: MapPin },
-  { to: "/relatorios", label: "Relatórios", icon: FileText },
+  { to: "/app", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/app/promotores", label: "Promotores", icon: Users },
+  { to: "/app/clientes", label: "Clientes", icon: Building2 },
+  { to: "/app/lojas", label: "Lojas", icon: Store },
+  { to: "/app/produtos", label: "Produtos", icon: Package },
+  { to: "/app/campanhas", label: "Campanhas", icon: Megaphone },
+  { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
+  { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
 
 function AdminDashboard() {
@@ -65,7 +65,7 @@ function AdminDashboard() {
       <Card className="p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-bold text-lg">Atividade recente</h2>
-          <Button asChild variant="outline" size="sm"><Link to="/monitoramento">Ver tudo</Link></Button>
+          <Button asChild variant="outline" size="sm"><Link to="/app/monitoramento">Ver tudo</Link></Button>
         </div>
         <div className="space-y-2">
           {recentes.length === 0 && <p className="text-sm text-muted-foreground py-4 text-center">Sem atividades recentes.</p>}
@@ -293,9 +293,9 @@ export default function AdminApp() {
   return (
     <DesktopLayout items={items} title="Painel Admin">
       <Routes>
-        <Route path="/" element={<AdminDashboard />} />
-        <Route path="/promotores" element={<PromotoresAdmin />} />
-        <Route path="/clientes" element={
+        <Route index element={<AdminDashboard />} />
+        <Route path="promotores" element={<PromotoresAdmin />} />
+        <Route path="clientes" element={
           <CrudList title="Clientes" table="clientes" columns={[{ key: "nome", label: "Nome" }, { key: "cnpj", label: "CNPJ" }, { key: "email_contato", label: "Contato" }]}
             formFields={[
               { key: "nome", label: "Nome", required: true },
@@ -304,7 +304,7 @@ export default function AdminApp() {
               { key: "telefone", label: "Telefone" },
             ]} />
         } />
-        <Route path="/lojas" element={
+        <Route path="lojas" element={
           <CrudList title="Lojas" table="lojas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "cidade", label: "Cidade" }, { key: "raio_metros", label: "Raio (m)" }]}
             formFields={[
@@ -318,7 +318,7 @@ export default function AdminApp() {
               { key: "raio_metros", label: "Raio em metros", type: "number" },
             ]} />
         } />
-        <Route path="/produtos" element={
+        <Route path="produtos" element={
           <CrudList title="Produtos" table="produtos" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "sku", label: "SKU" }, { key: "marca", label: "Marca" }, { key: "cliente", label: "Cliente" }]}
             formFields={[
@@ -329,7 +329,7 @@ export default function AdminApp() {
               { key: "categoria", label: "Categoria" },
             ]} />
         } />
-        <Route path="/campanhas" element={
+        <Route path="campanhas" element={
           <CrudList title="Campanhas" table="campanhas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "data_inicio", label: "Início" }, { key: "data_fim", label: "Fim" }, { key: "status", label: "Status" }]}
             formFields={[
@@ -341,9 +341,9 @@ export default function AdminApp() {
               { key: "status", label: "Status", options: [{ value: "rascunho", label: "Rascunho" }, { value: "ativa", label: "Ativa" }, { value: "pausada", label: "Pausada" }, { value: "concluida", label: "Concluída" }] },
             ]} />
         } />
-        <Route path="/monitoramento" element={<MonitoramentoPage />} />
-        <Route path="/relatorios" element={<RelatoriosPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="monitoramento" element={<MonitoramentoPage />} />
+        <Route path="relatorios" element={<RelatoriosPage />} />
+        <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </DesktopLayout>
   );
