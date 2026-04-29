@@ -30,10 +30,22 @@ const items = [
 
 function AdminDashboard() {
   const [stats, setStats] = useState({ promotores: 0, lojas: 0, checkInsHoje: 0, rupturas: 0, validades: 0, campanhas: 0 });
+  const [fin, setFin] = useState({ pagar: 0, receber: 0, lucro: 0 });
   const [recentes, setRecentes] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const [proms, lojas, ci, rupt, vals, camps, recs, finData] = await Promise.all([
+        supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "promotor"),
+        supabase.from("lojas").select("id", { count: "exact", head: true }).eq("ativo", true),
+        supabase.from("check_ins").select("id", { count: "exact", head: true }).gte("hora_entrada", today.toISOString()),
+        supabase.from("rupturas").select("id", { count: "exact", head: true }).eq("status", "aberta"),
+        supabase.from("validades").select("id", { count: "exact", head: true }),
+        supabase.from("campanhas").select("id", { count: "exact", head: true }).eq("status", "ativa"),
+        supabase.from("check_ins").select("*, lojas(nome), profiles!check_ins_promotor_id_fkey(nome)").order("hora_entrada", { ascending: false }).limit(8),
+        supabase.from("resumo_financeiro_mensal").select("*").limit(1).maybeSingle(),
+      ]);
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const [proms, lojas, ci, rupt, vals, camps, recs] = await Promise.all([
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "promotor"),
