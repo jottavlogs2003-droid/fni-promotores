@@ -110,6 +110,7 @@ export default function ContratanteApp() {
         <Route path="lojas" element={<GenericTable title="Suas lojas" table="lojas" columns={[{ key: "nome", label: "Nome" }, { key: "cidade", label: "Cidade" }, { key: "estado", label: "UF" }]} />} />
         <Route path="execucoes" element={<GenericTable title="Execuções" table="execucoes" columns={[{ key: "loja", label: "Loja" }, { key: "score", label: "Score" }, { key: "observacoes", label: "Observações" }, { key: "created_at", label: "Quando" }]} />} />
         <Route path="rupturas" element={<GenericTable title="Rupturas" table="rupturas" columns={[{ key: "produto", label: "Produto" }, { key: "loja", label: "Loja" }, { key: "quantidade_atual", label: "Qtd" }, { key: "status", label: "Status" }, { key: "created_at", label: "Quando" }]} />} />
+        <Route path="faturas" element={<MinhasFaturas />} />
         <Route path="relatorios" element={
           <div className="space-y-4 animate-fade-in-up">
             <h1 className="text-3xl font-display font-bold">Relatórios</h1>
