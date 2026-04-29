@@ -6,7 +6,7 @@ import AdminApp from "./AdminApp";
 import ContratanteApp from "./ContratanteApp";
 import { Logo } from "@/components/Logo";
 
-const Index = () => {
+const AppRouter = () => {
   const { user, primaryRole, loading } = useAuth();
 
   if (loading) {
@@ -37,4 +37,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default AppRouter;
