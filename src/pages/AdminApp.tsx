@@ -8,29 +8,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2 } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wallet, Receipt } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { FinanceiroDashboard, PagamentosPromotores, FaturasClientes, EscalaAdmin } from "./admin/FinanceiroAdmin";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/app/escala", label: "Escala", icon: Calendar },
   { to: "/app/promotores", label: "Promotores", icon: Users },
   { to: "/app/clientes", label: "Clientes", icon: Building2 },
   { to: "/app/lojas", label: "Lojas", icon: Store },
   { to: "/app/produtos", label: "Produtos", icon: Package },
   { to: "/app/campanhas", label: "Campanhas", icon: Megaphone },
+  { to: "/app/financeiro", label: "Financeiro", icon: DollarSign },
+  { to: "/app/pagamentos", label: "Pagamentos", icon: Wallet },
+  { to: "/app/faturas", label: "Faturas", icon: Receipt },
   { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
   { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
 
 function AdminDashboard() {
   const [stats, setStats] = useState({ promotores: 0, lojas: 0, checkInsHoje: 0, rupturas: 0, validades: 0, campanhas: 0 });
+  const [fin, setFin] = useState({ pagar: 0, receber: 0, lucro: 0 });
   const [recentes, setRecentes] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
       const today = new Date(); today.setHours(0, 0, 0, 0);
-      const [proms, lojas, ci, rupt, vals, camps, recs] = await Promise.all([
+      const [proms, lojas, ci, rupt, vals, camps, recs, finData] = await Promise.all([
         supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "promotor"),
         supabase.from("lojas").select("id", { count: "exact", head: true }).eq("ativo", true),
         supabase.from("check_ins").select("id", { count: "exact", head: true }).gte("hora_entrada", today.toISOString()),
@@ -38,14 +44,23 @@ function AdminDashboard() {
         supabase.from("validades").select("id", { count: "exact", head: true }),
         supabase.from("campanhas").select("id", { count: "exact", head: true }).eq("status", "ativa"),
         supabase.from("check_ins").select("*, lojas(nome), profiles!check_ins_promotor_id_fkey(nome)").order("hora_entrada", { ascending: false }).limit(8),
+        supabase.from("resumo_financeiro_mensal").select("*").limit(1).maybeSingle(),
       ]);
       setStats({
         promotores: proms.count ?? 0, lojas: lojas.count ?? 0, checkInsHoje: ci.count ?? 0,
         rupturas: rupt.count ?? 0, validades: vals.count ?? 0, campanhas: camps.count ?? 0,
       });
+      const f: any = finData.data ?? {};
+      setFin({
+        pagar: Number(f.total_pagar_promotores ?? 0),
+        receber: Number(f.total_receber_clientes ?? 0),
+        lucro: Number(f.lucro ?? 0),
+      });
       setRecentes(recs.data ?? []);
     })();
   }, []);
+
+  const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -61,6 +76,25 @@ function AdminDashboard() {
         <StatCard label="Validades" value={stats.validades} icon={FileText} variant="primary" />
         <StatCard label="Campanhas ativas" value={stats.campanhas} icon={Megaphone} variant="secondary" />
       </div>
+
+      <Card className="p-5 bg-gradient-to-br from-primary/20 to-secondary/20 border-primary/30">
+        <h2 className="font-display font-bold text-lg mb-4">Resumo financeiro do mês</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-xs text-foreground/70">A pagar (promotores)</p>
+            <p className="text-2xl font-bold text-warning">{BRL(fin.pagar)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-foreground/70">A receber (clientes)</p>
+            <p className="text-2xl font-bold text-success">{BRL(fin.receber)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-foreground/70">Lucro estimado</p>
+            <p className="text-2xl font-bold">{BRL(fin.lucro)}</p>
+          </div>
+        </div>
+        <Button asChild variant="brand" size="sm" className="mt-4"><Link to="/app/financeiro">Ver detalhes</Link></Button>
+      </Card>
 
       <Card className="p-5">
         <div className="flex items-center justify-between mb-4">
@@ -253,38 +287,121 @@ function RelatoriosPage() {
 
 function PromotoresAdmin() {
   const [profiles, setProfiles] = useState<any[]>([]);
-  useEffect(() => {
-    supabase.from("profiles").select("*, user_roles(role)").then(({ data }) => setProfiles(data ?? []));
-  }, []);
+  const [editing, setEditing] = useState<any>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function load() {
+    const { data } = await supabase.from("profiles").select("*, user_roles(role)").order("created_at", { ascending: false });
+    setProfiles(data ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
   async function setRole(userId: string, role: "admin" | "contratante" | "promotor") {
     await supabase.from("user_roles").delete().eq("user_id", userId);
     const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
-    if (error) toast.error(error.message); else { toast.success("Perfil atualizado"); location.reload(); }
+    if (error) toast.error(error.message); else { toast.success("Perfil atualizado"); load(); }
   }
+
+  async function saveFinanceiro(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    const fd = new FormData(e.currentTarget);
+    const payload: any = {
+      cpf: fd.get("cpf") || null,
+      telefone: fd.get("telefone") || null,
+      tipo_promotor: fd.get("tipo_promotor") || null,
+      jornada_horas: fd.get("jornada_horas") ? Number(fd.get("jornada_horas")) : null,
+      permite_dupla_diaria: fd.get("permite_dupla_diaria") === "on",
+      valor_diaria: Number(fd.get("valor_diaria") || 0),
+      valor_hora_extra: Number(fd.get("valor_hora_extra") || 0),
+      forma_pagamento: fd.get("forma_pagamento") || null,
+      chave_pix: fd.get("chave_pix") || null,
+    };
+    const { error } = await supabase.from("profiles").update(payload).eq("id", editing.id);
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else { toast.success("Salvo!"); setEditing(null); load(); }
+  }
+
   return (
     <div className="space-y-5 animate-fade-in-up">
-      <h1 className="text-3xl font-display font-bold">Usuários</h1>
+      <h1 className="text-3xl font-display font-bold">Promotores & Usuários</h1>
       <Card>
-        <table className="w-full text-sm">
-          <thead><tr className="border-b border-border bg-muted/50">
-            <th className="text-left p-3">Nome</th><th className="text-left p-3">Email</th><th className="text-left p-3">Perfil atual</th><th className="text-left p-3">Definir perfil</th>
-          </tr></thead>
-          <tbody>
-            {profiles.map(p => (
-              <tr key={p.id} className="border-b border-border hover:bg-muted/30">
-                <td className="p-3 font-medium">{p.nome}</td>
-                <td className="p-3 text-xs">{p.email}</td>
-                <td className="p-3"><Badge>{p.user_roles?.[0]?.role ?? "—"}</Badge></td>
-                <td className="p-3 flex gap-1">
-                  <Button size="sm" variant="outline" onClick={() => setRole(p.id, "admin")}>Admin</Button>
-                  <Button size="sm" variant="outline" onClick={() => setRole(p.id, "contratante")}>Contratante</Button>
-                  <Button size="sm" variant="outline" onClick={() => setRole(p.id, "promotor")}>Promotor</Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border">
+              <th className="text-left p-3">Nome</th>
+              <th className="text-left p-3">Email</th>
+              <th className="text-left p-3">Tipo</th>
+              <th className="text-right p-3">R$/diária</th>
+              <th className="text-left p-3">Pagamento</th>
+              <th className="text-left p-3">Perfil</th>
+              <th className="p-3"></th>
+            </tr></thead>
+            <tbody>
+              {profiles.map(p => (
+                <tr key={p.id} className="border-b border-border last:border-0 hover:bg-card/40">
+                  <td className="p-3 font-medium">{p.nome}</td>
+                  <td className="p-3 text-xs">{p.email}</td>
+                  <td className="p-3 text-xs">{p.tipo_promotor ?? "—"} · {p.jornada_horas ?? "—"}h</td>
+                  <td className="p-3 text-right">{p.valor_diaria ? Number(p.valor_diaria).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}</td>
+                  <td className="p-3 text-xs">{p.forma_pagamento ?? "—"}</td>
+                  <td className="p-3"><Badge>{p.user_roles?.[0]?.role ?? "—"}</Badge></td>
+                  <td className="p-3 flex flex-wrap gap-1">
+                    <Button size="sm" variant="outline" onClick={() => setEditing(p)}>Editar dados</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "admin")}>A</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "contratante")}>C</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "promotor")}>P</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
+
+      <Dialog open={!!editing} onOpenChange={v => !v && setEditing(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Editar promotor: {editing?.nome}</DialogTitle></DialogHeader>
+          {editing && (
+            <form onSubmit={saveFinanceiro} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>CPF</Label><Input name="cpf" defaultValue={editing.cpf ?? ""} /></div>
+                <div><Label>Telefone</Label><Input name="telefone" defaultValue={editing.telefone ?? ""} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Tipo</Label>
+                  <select name="tipo_promotor" defaultValue={editing.tipo_promotor ?? ""} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">—</option><option value="fixo">Fixo</option><option value="rotativo">Rotativo</option>
+                  </select>
+                </div>
+                <div><Label>Jornada (h)</Label>
+                  <select name="jornada_horas" defaultValue={editing.jornada_horas ?? ""} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">—</option><option value="6">6h (1 diária)</option><option value="12">12h (2 diárias)</option>
+                  </select>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="permite_dupla_diaria" defaultChecked={editing.permite_dupla_diaria} className="h-4 w-4 accent-primary" />
+                Permite dupla diária
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Valor diária (R$)</Label><Input name="valor_diaria" type="number" step="0.01" defaultValue={editing.valor_diaria ?? 0} /></div>
+                <div><Label>Hora extra (R$)</Label><Input name="valor_hora_extra" type="number" step="0.01" defaultValue={editing.valor_hora_extra ?? 0} /></div>
+              </div>
+              <div><Label>Forma de pagamento</Label>
+                <select name="forma_pagamento" defaultValue={editing.forma_pagamento ?? ""} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                  <option value="">—</option><option value="pix">PIX</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option>
+                </select>
+              </div>
+              <div><Label>Chave PIX</Label><Input name="chave_pix" defaultValue={editing.chave_pix ?? ""} /></div>
+              <Button type="submit" disabled={busy} variant="brand" className="w-full">
+                {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Salvar
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -296,14 +413,23 @@ export default function AdminApp() {
         <Route index element={<AdminDashboard />} />
         <Route path="promotores" element={<PromotoresAdmin />} />
         <Route path="clientes" element={
-          <CrudList title="Clientes" table="clientes" columns={[{ key: "nome", label: "Nome" }, { key: "cnpj", label: "CNPJ" }, { key: "email_contato", label: "Contato" }]}
+          <CrudList title="Clientes" table="clientes" columns={[{ key: "nome", label: "Nome" }, { key: "responsavel", label: "Responsável" }, { key: "tipo_cobranca", label: "Cobrança" }, { key: "valor_diaria_cobrada", label: "R$/diária" }]}
             formFields={[
-              { key: "nome", label: "Nome", required: true },
+              { key: "nome", label: "Nome da empresa", required: true },
+              { key: "responsavel", label: "Responsável" },
               { key: "cnpj", label: "CNPJ" },
               { key: "email_contato", label: "Email", type: "email" },
               { key: "telefone", label: "Telefone" },
+              { key: "tipo_cobranca", label: "Tipo de cobrança", options: [{ value: "diaria", label: "Por diária" }, { value: "hora", label: "Por hora" }, { value: "mensal", label: "Mensal" }] },
+              { key: "valor_diaria_cobrada", label: "Valor por diária (R$)", type: "number" },
+              { key: "valor_hora_cobrada", label: "Valor por hora (R$)", type: "number" },
+              { key: "valor_mensal", label: "Valor mensal (R$)", type: "number" },
             ]} />
         } />
+        <Route path="financeiro" element={<FinanceiroDashboard />} />
+        <Route path="pagamentos" element={<PagamentosPromotores />} />
+        <Route path="faturas" element={<FaturasClientes />} />
+        <Route path="escala" element={<EscalaAdmin />} />
         <Route path="lojas" element={
           <CrudList title="Lojas" table="lojas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "cidade", label: "Cidade" }, { key: "raio_metros", label: "Raio (m)" }]}

@@ -5,7 +5,7 @@ import { DesktopLayout } from "@/components/layouts/DesktopLayout";
 import { StatCard } from "@/components/StatCard";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText } from "lucide-react";
+import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText, Receipt } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const items = [
@@ -13,6 +13,7 @@ const items = [
   { to: "/app/lojas", label: "Lojas", icon: Store },
   { to: "/app/execucoes", label: "Execuções", icon: Camera },
   { to: "/app/rupturas", label: "Rupturas", icon: AlertTriangle },
+  { to: "/app/faturas", label: "Faturas", icon: Receipt },
   { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
 
@@ -101,6 +102,45 @@ function GenericTable({ title, table, columns }: { title: string; table: string;
   );
 }
 
+function MinhasFaturas() {
+  const { profile } = useAuth();
+  const [faturas, setFaturas] = useState<any[]>([]);
+  useEffect(() => {
+    if (!profile?.cliente_id) return;
+    supabase.from("faturas_clientes").select("*").eq("cliente_id", profile.cliente_id).order("created_at", { ascending: false }).then(({ data }) => setFaturas(data ?? []));
+  }, [profile]);
+  const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const aberto = faturas.filter(f => f.status !== "paga").reduce((s, f) => s + Number(f.valor_total || 0), 0);
+  return (
+    <div className="space-y-4 animate-fade-in-up">
+      <div>
+        <h1 className="text-3xl font-display font-bold">Faturas</h1>
+        <p className="text-foreground/70 text-sm">Em aberto: <strong>{BRL(aberto)}</strong></p>
+      </div>
+      <Card>
+        <table className="w-full text-sm">
+          <thead><tr className="border-b border-border">
+            <th className="text-left p-3">Nº</th><th className="text-left p-3">Período</th><th className="text-right p-3">Diárias</th><th className="text-right p-3">Valor</th><th className="text-left p-3">Vencto</th><th className="text-left p-3">Status</th>
+          </tr></thead>
+          <tbody>
+            {faturas.length === 0 ? <tr><td colSpan={6} className="p-8 text-center text-foreground/60">Nenhuma fatura ainda.</td></tr> :
+              faturas.map(f => (
+                <tr key={f.id} className="border-b border-border last:border-0 hover:bg-card/40">
+                  <td className="p-3 font-mono text-xs">{f.numero_fatura}</td>
+                  <td className="p-3 text-xs">{f.periodo_inicio} → {f.periodo_fim}</td>
+                  <td className="p-3 text-right">{Number(f.total_diarias).toFixed(1)}</td>
+                  <td className="p-3 text-right font-semibold">{BRL(Number(f.valor_total))}</td>
+                  <td className="p-3 text-xs">{f.data_vencimento ?? "—"}</td>
+                  <td className="p-3"><Badge className={f.status === "paga" ? "bg-success text-success-foreground" : f.status === "vencida" ? "bg-destructive text-destructive-foreground" : "bg-warning text-warning-foreground"}>{f.status}</Badge></td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </Card>
+    </div>
+  );
+}
+
 export default function ContratanteApp() {
   return (
     <DesktopLayout items={items} title="Contratante">
@@ -109,6 +149,7 @@ export default function ContratanteApp() {
         <Route path="lojas" element={<GenericTable title="Suas lojas" table="lojas" columns={[{ key: "nome", label: "Nome" }, { key: "cidade", label: "Cidade" }, { key: "estado", label: "UF" }]} />} />
         <Route path="execucoes" element={<GenericTable title="Execuções" table="execucoes" columns={[{ key: "loja", label: "Loja" }, { key: "score", label: "Score" }, { key: "observacoes", label: "Observações" }, { key: "created_at", label: "Quando" }]} />} />
         <Route path="rupturas" element={<GenericTable title="Rupturas" table="rupturas" columns={[{ key: "produto", label: "Produto" }, { key: "loja", label: "Loja" }, { key: "quantidade_atual", label: "Qtd" }, { key: "status", label: "Status" }, { key: "created_at", label: "Quando" }]} />} />
+        <Route path="faturas" element={<MinhasFaturas />} />
         <Route path="relatorios" element={
           <div className="space-y-4 animate-fade-in-up">
             <h1 className="text-3xl font-display font-bold">Relatórios</h1>
