@@ -77,6 +77,25 @@ function AdminDashboard() {
         <StatCard label="Campanhas ativas" value={stats.campanhas} icon={Megaphone} variant="secondary" />
       </div>
 
+      <Card className="p-5 bg-gradient-to-br from-primary/20 to-secondary/20 border-primary/30">
+        <h2 className="font-display font-bold text-lg mb-4">Resumo financeiro do mês</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-xs text-foreground/70">A pagar (promotores)</p>
+            <p className="text-2xl font-bold text-warning">{BRL(fin.pagar)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-foreground/70">A receber (clientes)</p>
+            <p className="text-2xl font-bold text-success">{BRL(fin.receber)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-foreground/70">Lucro estimado</p>
+            <p className="text-2xl font-bold">{BRL(fin.lucro)}</p>
+          </div>
+        </div>
+        <Button asChild variant="brand" size="sm" className="mt-4"><Link to="/app/financeiro">Ver detalhes</Link></Button>
+      </Card>
+
       <Card className="p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-bold text-lg">Atividade recente</h2>
