@@ -194,8 +194,13 @@ export type Database = {
           email_contato: string | null
           id: string
           nome: string
+          responsavel: string | null
           telefone: string | null
+          tipo_cobranca: string | null
           updated_at: string
+          valor_diaria_cobrada: number | null
+          valor_hora_cobrada: number | null
+          valor_mensal: number | null
         }
         Insert: {
           ativo?: boolean
@@ -204,8 +209,13 @@ export type Database = {
           email_contato?: string | null
           id?: string
           nome: string
+          responsavel?: string | null
           telefone?: string | null
+          tipo_cobranca?: string | null
           updated_at?: string
+          valor_diaria_cobrada?: number | null
+          valor_hora_cobrada?: number | null
+          valor_mensal?: number | null
         }
         Update: {
           ativo?: boolean
@@ -214,7 +224,66 @@ export type Database = {
           email_contato?: string | null
           id?: string
           nome?: string
+          responsavel?: string | null
           telefone?: string | null
+          tipo_cobranca?: string | null
+          updated_at?: string
+          valor_diaria_cobrada?: number | null
+          valor_hora_cobrada?: number | null
+          valor_mensal?: number | null
+        }
+        Relationships: []
+      }
+      escalas: {
+        Row: {
+          campanha_id: string | null
+          check_in_id: string | null
+          created_at: string
+          data: string
+          diarias: number
+          duracao_horas: number
+          hora_fim: string
+          hora_inicio: string
+          id: string
+          loja_id: string
+          observacoes: string | null
+          promotor_id: string
+          status: string
+          turno: number
+          updated_at: string
+        }
+        Insert: {
+          campanha_id?: string | null
+          check_in_id?: string | null
+          created_at?: string
+          data: string
+          diarias?: number
+          duracao_horas: number
+          hora_fim: string
+          hora_inicio: string
+          id?: string
+          loja_id: string
+          observacoes?: string | null
+          promotor_id: string
+          status?: string
+          turno?: number
+          updated_at?: string
+        }
+        Update: {
+          campanha_id?: string | null
+          check_in_id?: string | null
+          created_at?: string
+          data?: string
+          diarias?: number
+          duracao_horas?: number
+          hora_fim?: string
+          hora_inicio?: string
+          id?: string
+          loja_id?: string
+          observacoes?: string | null
+          promotor_id?: string
+          status?: string
+          turno?: number
           updated_at?: string
         }
         Relationships: []
@@ -275,6 +344,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      faturas_clientes: {
+        Row: {
+          campanha_id: string | null
+          cliente_id: string
+          created_at: string
+          data_emissao: string
+          data_pagamento: string | null
+          data_vencimento: string | null
+          id: string
+          numero_fatura: string | null
+          observacoes: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          status: string
+          total_diarias: number
+          total_horas: number
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          campanha_id?: string | null
+          cliente_id: string
+          created_at?: string
+          data_emissao?: string
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          id?: string
+          numero_fatura?: string | null
+          observacoes?: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          status?: string
+          total_diarias?: number
+          total_horas?: number
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          campanha_id?: string | null
+          cliente_id?: string
+          created_at?: string
+          data_emissao?: string
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          id?: string
+          numero_fatura?: string | null
+          observacoes?: string | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          status?: string
+          total_diarias?: number
+          total_horas?: number
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: []
       }
       fotos_execucao: {
         Row: {
@@ -426,6 +552,66 @@ export type Database = {
         }
         Relationships: []
       }
+      pagamentos_promotores: {
+        Row: {
+          comprovante_url: string | null
+          created_at: string
+          data_pagamento: string | null
+          forma_pagamento: string | null
+          horas_extras: number
+          id: string
+          observacoes: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          promotor_id: string
+          status: string
+          total_diarias: number
+          total_turnos: number
+          updated_at: string
+          valor_diarias: number
+          valor_extras: number
+          valor_total: number
+        }
+        Insert: {
+          comprovante_url?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          forma_pagamento?: string | null
+          horas_extras?: number
+          id?: string
+          observacoes?: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          promotor_id: string
+          status?: string
+          total_diarias?: number
+          total_turnos?: number
+          updated_at?: string
+          valor_diarias?: number
+          valor_extras?: number
+          valor_total?: number
+        }
+        Update: {
+          comprovante_url?: string | null
+          created_at?: string
+          data_pagamento?: string | null
+          forma_pagamento?: string | null
+          horas_extras?: number
+          id?: string
+          observacoes?: string | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          promotor_id?: string
+          status?: string
+          total_diarias?: number
+          total_turnos?: number
+          updated_at?: string
+          valor_diarias?: number
+          valor_extras?: number
+          valor_total?: number
+        }
+        Relationships: []
+      }
       produtos: {
         Row: {
           ativo: boolean
@@ -474,35 +660,62 @@ export type Database = {
         Row: {
           ativo: boolean
           avatar_url: string | null
+          chave_pix: string | null
           cliente_id: string | null
+          cpf: string | null
           created_at: string
           email: string
+          forma_pagamento: string | null
           id: string
+          jornada_horas: number | null
+          loja_fixa_id: string | null
           nome: string
+          permite_dupla_diaria: boolean | null
           telefone: string | null
+          tipo_promotor: string | null
           updated_at: string
+          valor_diaria: number | null
+          valor_hora_extra: number | null
         }
         Insert: {
           ativo?: boolean
           avatar_url?: string | null
+          chave_pix?: string | null
           cliente_id?: string | null
+          cpf?: string | null
           created_at?: string
           email: string
+          forma_pagamento?: string | null
           id: string
+          jornada_horas?: number | null
+          loja_fixa_id?: string | null
           nome: string
+          permite_dupla_diaria?: boolean | null
           telefone?: string | null
+          tipo_promotor?: string | null
           updated_at?: string
+          valor_diaria?: number | null
+          valor_hora_extra?: number | null
         }
         Update: {
           ativo?: boolean
           avatar_url?: string | null
+          chave_pix?: string | null
           cliente_id?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string
+          forma_pagamento?: string | null
           id?: string
+          jornada_horas?: number | null
+          loja_fixa_id?: string | null
           nome?: string
+          permite_dupla_diaria?: boolean | null
           telefone?: string | null
+          tipo_promotor?: string | null
           updated_at?: string
+          valor_diaria?: number | null
+          valor_hora_extra?: number | null
         }
         Relationships: [
           {
@@ -639,7 +852,15 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      resumo_financeiro_mensal: {
+        Row: {
+          lucro: number | null
+          mes: string | null
+          total_pagar_promotores: number | null
+          total_receber_clientes: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_cliente_id: { Args: { _user_id: string }; Returns: string }
