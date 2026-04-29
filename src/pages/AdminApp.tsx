@@ -287,38 +287,121 @@ function RelatoriosPage() {
 
 function PromotoresAdmin() {
   const [profiles, setProfiles] = useState<any[]>([]);
-  useEffect(() => {
-    supabase.from("profiles").select("*, user_roles(role)").then(({ data }) => setProfiles(data ?? []));
-  }, []);
+  const [editing, setEditing] = useState<any>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function load() {
+    const { data } = await supabase.from("profiles").select("*, user_roles(role)").order("created_at", { ascending: false });
+    setProfiles(data ?? []);
+  }
+  useEffect(() => { load(); }, []);
+
   async function setRole(userId: string, role: "admin" | "contratante" | "promotor") {
     await supabase.from("user_roles").delete().eq("user_id", userId);
     const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
-    if (error) toast.error(error.message); else { toast.success("Perfil atualizado"); location.reload(); }
+    if (error) toast.error(error.message); else { toast.success("Perfil atualizado"); load(); }
   }
+
+  async function saveFinanceiro(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    const fd = new FormData(e.currentTarget);
+    const payload: any = {
+      cpf: fd.get("cpf") || null,
+      telefone: fd.get("telefone") || null,
+      tipo_promotor: fd.get("tipo_promotor") || null,
+      jornada_horas: fd.get("jornada_horas") ? Number(fd.get("jornada_horas")) : null,
+      permite_dupla_diaria: fd.get("permite_dupla_diaria") === "on",
+      valor_diaria: Number(fd.get("valor_diaria") || 0),
+      valor_hora_extra: Number(fd.get("valor_hora_extra") || 0),
+      forma_pagamento: fd.get("forma_pagamento") || null,
+      chave_pix: fd.get("chave_pix") || null,
+    };
+    const { error } = await supabase.from("profiles").update(payload).eq("id", editing.id);
+    setBusy(false);
+    if (error) toast.error(error.message);
+    else { toast.success("Salvo!"); setEditing(null); load(); }
+  }
+
   return (
     <div className="space-y-5 animate-fade-in-up">
-      <h1 className="text-3xl font-display font-bold">Usuários</h1>
+      <h1 className="text-3xl font-display font-bold">Promotores & Usuários</h1>
       <Card>
-        <table className="w-full text-sm">
-          <thead><tr className="border-b border-border bg-muted/50">
-            <th className="text-left p-3">Nome</th><th className="text-left p-3">Email</th><th className="text-left p-3">Perfil atual</th><th className="text-left p-3">Definir perfil</th>
-          </tr></thead>
-          <tbody>
-            {profiles.map(p => (
-              <tr key={p.id} className="border-b border-border hover:bg-muted/30">
-                <td className="p-3 font-medium">{p.nome}</td>
-                <td className="p-3 text-xs">{p.email}</td>
-                <td className="p-3"><Badge>{p.user_roles?.[0]?.role ?? "—"}</Badge></td>
-                <td className="p-3 flex gap-1">
-                  <Button size="sm" variant="outline" onClick={() => setRole(p.id, "admin")}>Admin</Button>
-                  <Button size="sm" variant="outline" onClick={() => setRole(p.id, "contratante")}>Contratante</Button>
-                  <Button size="sm" variant="outline" onClick={() => setRole(p.id, "promotor")}>Promotor</Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border">
+              <th className="text-left p-3">Nome</th>
+              <th className="text-left p-3">Email</th>
+              <th className="text-left p-3">Tipo</th>
+              <th className="text-right p-3">R$/diária</th>
+              <th className="text-left p-3">Pagamento</th>
+              <th className="text-left p-3">Perfil</th>
+              <th className="p-3"></th>
+            </tr></thead>
+            <tbody>
+              {profiles.map(p => (
+                <tr key={p.id} className="border-b border-border last:border-0 hover:bg-card/40">
+                  <td className="p-3 font-medium">{p.nome}</td>
+                  <td className="p-3 text-xs">{p.email}</td>
+                  <td className="p-3 text-xs">{p.tipo_promotor ?? "—"} · {p.jornada_horas ?? "—"}h</td>
+                  <td className="p-3 text-right">{p.valor_diaria ? Number(p.valor_diaria).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}</td>
+                  <td className="p-3 text-xs">{p.forma_pagamento ?? "—"}</td>
+                  <td className="p-3"><Badge>{p.user_roles?.[0]?.role ?? "—"}</Badge></td>
+                  <td className="p-3 flex flex-wrap gap-1">
+                    <Button size="sm" variant="outline" onClick={() => setEditing(p)}>Editar dados</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "admin")}>A</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "contratante")}>C</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "promotor")}>P</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
+
+      <Dialog open={!!editing} onOpenChange={v => !v && setEditing(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Editar promotor: {editing?.nome}</DialogTitle></DialogHeader>
+          {editing && (
+            <form onSubmit={saveFinanceiro} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>CPF</Label><Input name="cpf" defaultValue={editing.cpf ?? ""} /></div>
+                <div><Label>Telefone</Label><Input name="telefone" defaultValue={editing.telefone ?? ""} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Tipo</Label>
+                  <select name="tipo_promotor" defaultValue={editing.tipo_promotor ?? ""} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">—</option><option value="fixo">Fixo</option><option value="rotativo">Rotativo</option>
+                  </select>
+                </div>
+                <div><Label>Jornada (h)</Label>
+                  <select name="jornada_horas" defaultValue={editing.jornada_horas ?? ""} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">—</option><option value="6">6h (1 diária)</option><option value="12">12h (2 diárias)</option>
+                  </select>
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="permite_dupla_diaria" defaultChecked={editing.permite_dupla_diaria} className="h-4 w-4 accent-primary" />
+                Permite dupla diária
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Valor diária (R$)</Label><Input name="valor_diaria" type="number" step="0.01" defaultValue={editing.valor_diaria ?? 0} /></div>
+                <div><Label>Hora extra (R$)</Label><Input name="valor_hora_extra" type="number" step="0.01" defaultValue={editing.valor_hora_extra ?? 0} /></div>
+              </div>
+              <div><Label>Forma de pagamento</Label>
+                <select name="forma_pagamento" defaultValue={editing.forma_pagamento ?? ""} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                  <option value="">—</option><option value="pix">PIX</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option>
+                </select>
+              </div>
+              <div><Label>Chave PIX</Label><Input name="chave_pix" defaultValue={editing.chave_pix ?? ""} /></div>
+              <Button type="submit" disabled={busy} variant="brand" className="w-full">
+                {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Salvar
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
