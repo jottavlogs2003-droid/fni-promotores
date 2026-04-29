@@ -68,15 +68,15 @@
     --transition-base: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-spring: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    /* Sidebar */
-    --sidebar-background: 218 70% 14%;
-    --sidebar-foreground: 220 20% 92%;
-    --sidebar-primary: 354 78% 52%;
+    /* Sidebar — Deep navy */
+    --sidebar-background: 226 75% 18%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 354 78% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 218 60% 20%;
+    --sidebar-accent: 226 65% 26%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 218 50% 22%;
-    --sidebar-ring: 354 78% 52%;
+    --sidebar-border: 226 55% 30%;
+    --sidebar-ring: 204 92% 60%;
   }
 
   .dark {
