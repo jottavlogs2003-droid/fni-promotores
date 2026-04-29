@@ -10,10 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 
 const items = [
-  { to: "/", label: "Início", icon: Home },
-  { to: "/checkin", label: "Check-in", icon: MapPin },
-  { to: "/execucao", label: "Execução", icon: ListChecks },
-  { to: "/historico", label: "Histórico", icon: Calendar },
+  { to: "/app", label: "Início", icon: Home },
+  { to: "/app/checkin", label: "Check-in", icon: MapPin },
+  { to: "/app/execucao", label: "Execução", icon: ListChecks },
+  { to: "/app/historico", label: "Histórico", icon: Calendar },
 ];
 
 function PromotorHome() {

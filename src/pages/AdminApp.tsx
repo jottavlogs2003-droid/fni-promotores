@@ -13,14 +13,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 
 const items = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/promotores", label: "Promotores", icon: Users },
-  { to: "/clientes", label: "Clientes", icon: Building2 },
-  { to: "/lojas", label: "Lojas", icon: Store },
-  { to: "/produtos", label: "Produtos", icon: Package },
-  { to: "/campanhas", label: "Campanhas", icon: Megaphone },
-  { to: "/monitoramento", label: "Monitoramento", icon: MapPin },
-  { to: "/relatorios", label: "Relatórios", icon: FileText },
+  { to: "/app", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/app/promotores", label: "Promotores", icon: Users },
+  { to: "/app/clientes", label: "Clientes", icon: Building2 },
+  { to: "/app/lojas", label: "Lojas", icon: Store },
+  { to: "/app/produtos", label: "Produtos", icon: Package },
+  { to: "/app/campanhas", label: "Campanhas", icon: Megaphone },
+  { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
+  { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
 
 function AdminDashboard() {

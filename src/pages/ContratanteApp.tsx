@@ -9,11 +9,11 @@ import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText } from "
 import { useAuth } from "@/hooks/useAuth";
 
 const items = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/lojas", label: "Lojas", icon: Store },
-  { to: "/execucoes", label: "Execuções", icon: Camera },
-  { to: "/rupturas", label: "Rupturas", icon: AlertTriangle },
-  { to: "/relatorios", label: "Relatórios", icon: FileText },
+  { to: "/app", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/app/lojas", label: "Lojas", icon: Store },
+  { to: "/app/execucoes", label: "Execuções", icon: Camera },
+  { to: "/app/rupturas", label: "Rupturas", icon: AlertTriangle },
+  { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
 
 function ContratanteDashboard() {
