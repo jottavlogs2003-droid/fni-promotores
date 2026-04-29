@@ -46,23 +46,21 @@ function AdminDashboard() {
         supabase.from("check_ins").select("*, lojas(nome), profiles!check_ins_promotor_id_fkey(nome)").order("hora_entrada", { ascending: false }).limit(8),
         supabase.from("resumo_financeiro_mensal").select("*").limit(1).maybeSingle(),
       ]);
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const [proms, lojas, ci, rupt, vals, camps, recs] = await Promise.all([
-        supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "promotor"),
-        supabase.from("lojas").select("id", { count: "exact", head: true }).eq("ativo", true),
-        supabase.from("check_ins").select("id", { count: "exact", head: true }).gte("hora_entrada", today.toISOString()),
-        supabase.from("rupturas").select("id", { count: "exact", head: true }).eq("status", "aberta"),
-        supabase.from("validades").select("id", { count: "exact", head: true }),
-        supabase.from("campanhas").select("id", { count: "exact", head: true }).eq("status", "ativa"),
-        supabase.from("check_ins").select("*, lojas(nome), profiles!check_ins_promotor_id_fkey(nome)").order("hora_entrada", { ascending: false }).limit(8),
-      ]);
       setStats({
         promotores: proms.count ?? 0, lojas: lojas.count ?? 0, checkInsHoje: ci.count ?? 0,
         rupturas: rupt.count ?? 0, validades: vals.count ?? 0, campanhas: camps.count ?? 0,
       });
+      const f: any = finData.data ?? {};
+      setFin({
+        pagar: Number(f.total_pagar_promotores ?? 0),
+        receber: Number(f.total_receber_clientes ?? 0),
+        lucro: Number(f.lucro ?? 0),
+      });
       setRecentes(recs.data ?? []);
     })();
   }, []);
+
+  const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
     <div className="space-y-6 animate-fade-in-up">
