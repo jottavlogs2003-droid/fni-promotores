@@ -12,30 +12,30 @@
 
 @layer base {
   :root {
-    /* Surfaces */
-    --background: 220 25% 97%;
-    --foreground: 222 35% 12%;
+    /* Surfaces — Royal Blue background */
+    --background: 226 71% 40%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 35% 12%;
+    --card: 226 60% 32%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 35% 12%;
+    --popover: 226 60% 28%;
+    --popover-foreground: 0 0% 100%;
 
-    /* Brand — FNI Red */
-    --primary: 354 78% 52%;
+    /* Brand — FNI Red (action) */
+    --primary: 354 78% 56%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 354 88% 62%;
+    --primary-glow: 354 88% 66%;
 
-    /* Brand — FNI Blue */
-    --secondary: 204 88% 53%;
+    /* Brand — Light Blue (secondary action) */
+    --secondary: 204 92% 60%;
     --secondary-foreground: 0 0% 100%;
-    --secondary-deep: 218 70% 22%;
+    --secondary-deep: 226 71% 24%;
 
-    --muted: 220 20% 94%;
-    --muted-foreground: 222 15% 42%;
+    --muted: 226 50% 28%;
+    --muted-foreground: 220 30% 82%;
 
-    --accent: 204 88% 53%;
+    --accent: 204 92% 60%;
     --accent-foreground: 0 0% 100%;
 
     --success: 142 72% 42%;
