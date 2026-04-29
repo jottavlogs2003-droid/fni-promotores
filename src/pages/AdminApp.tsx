@@ -301,14 +301,23 @@ export default function AdminApp() {
         <Route index element={<AdminDashboard />} />
         <Route path="promotores" element={<PromotoresAdmin />} />
         <Route path="clientes" element={
-          <CrudList title="Clientes" table="clientes" columns={[{ key: "nome", label: "Nome" }, { key: "cnpj", label: "CNPJ" }, { key: "email_contato", label: "Contato" }]}
+          <CrudList title="Clientes" table="clientes" columns={[{ key: "nome", label: "Nome" }, { key: "responsavel", label: "Responsável" }, { key: "tipo_cobranca", label: "Cobrança" }, { key: "valor_diaria_cobrada", label: "R$/diária" }]}
             formFields={[
-              { key: "nome", label: "Nome", required: true },
+              { key: "nome", label: "Nome da empresa", required: true },
+              { key: "responsavel", label: "Responsável" },
               { key: "cnpj", label: "CNPJ" },
               { key: "email_contato", label: "Email", type: "email" },
               { key: "telefone", label: "Telefone" },
+              { key: "tipo_cobranca", label: "Tipo de cobrança", options: [{ value: "diaria", label: "Por diária" }, { value: "hora", label: "Por hora" }, { value: "mensal", label: "Mensal" }] },
+              { key: "valor_diaria_cobrada", label: "Valor por diária (R$)", type: "number" },
+              { key: "valor_hora_cobrada", label: "Valor por hora (R$)", type: "number" },
+              { key: "valor_mensal", label: "Valor mensal (R$)", type: "number" },
             ]} />
         } />
+        <Route path="financeiro" element={<FinanceiroDashboard />} />
+        <Route path="pagamentos" element={<PagamentosPromotores />} />
+        <Route path="faturas" element={<FaturasClientes />} />
+        <Route path="escala" element={<EscalaAdmin />} />
         <Route path="lojas" element={
           <CrudList title="Lojas" table="lojas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "cidade", label: "Cidade" }, { key: "raio_metros", label: "Raio (m)" }]}
