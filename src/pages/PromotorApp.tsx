@@ -452,11 +452,11 @@ export default function PromotorApp() {
   return (
     <MobileAppLayout items={items}>
       <Routes>
-        <Route path="/" element={<PromotorHome />} />
-        <Route path="/checkin" element={<CheckInPage />} />
-        <Route path="/execucao" element={<ExecucaoPage />} />
-        <Route path="/ruptura-validade" element={<RupturaValidadePage />} />
-        <Route path="/historico" element={<HistoricoPage />} />
+        <Route index element={<PromotorHome />} />
+        <Route path="checkin" element={<CheckInPage />} />
+        <Route path="execucao" element={<ExecucaoPage />} />
+        <Route path="ruptura-validade" element={<RupturaValidadePage />} />
+        <Route path="historico" element={<HistoricoPage />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </MobileAppLayout>

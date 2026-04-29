@@ -293,9 +293,9 @@ export default function AdminApp() {
   return (
     <DesktopLayout items={items} title="Painel Admin">
       <Routes>
-        <Route path="/" element={<AdminDashboard />} />
-        <Route path="/promotores" element={<PromotoresAdmin />} />
-        <Route path="/clientes" element={
+        <Route index element={<AdminDashboard />} />
+        <Route path="promotores" element={<PromotoresAdmin />} />
+        <Route path="clientes" element={
           <CrudList title="Clientes" table="clientes" columns={[{ key: "nome", label: "Nome" }, { key: "cnpj", label: "CNPJ" }, { key: "email_contato", label: "Contato" }]}
             formFields={[
               { key: "nome", label: "Nome", required: true },
@@ -304,7 +304,7 @@ export default function AdminApp() {
               { key: "telefone", label: "Telefone" },
             ]} />
         } />
-        <Route path="/lojas" element={
+        <Route path="lojas" element={
           <CrudList title="Lojas" table="lojas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "cidade", label: "Cidade" }, { key: "raio_metros", label: "Raio (m)" }]}
             formFields={[
@@ -318,7 +318,7 @@ export default function AdminApp() {
               { key: "raio_metros", label: "Raio em metros", type: "number" },
             ]} />
         } />
-        <Route path="/produtos" element={
+        <Route path="produtos" element={
           <CrudList title="Produtos" table="produtos" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "sku", label: "SKU" }, { key: "marca", label: "Marca" }, { key: "cliente", label: "Cliente" }]}
             formFields={[
@@ -329,7 +329,7 @@ export default function AdminApp() {
               { key: "categoria", label: "Categoria" },
             ]} />
         } />
-        <Route path="/campanhas" element={
+        <Route path="campanhas" element={
           <CrudList title="Campanhas" table="campanhas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "data_inicio", label: "Início" }, { key: "data_fim", label: "Fim" }, { key: "status", label: "Status" }]}
             formFields={[
@@ -341,8 +341,8 @@ export default function AdminApp() {
               { key: "status", label: "Status", options: [{ value: "rascunho", label: "Rascunho" }, { value: "ativa", label: "Ativa" }, { value: "pausada", label: "Pausada" }, { value: "concluida", label: "Concluída" }] },
             ]} />
         } />
-        <Route path="/monitoramento" element={<MonitoramentoPage />} />
-        <Route path="/relatorios" element={<RelatoriosPage />} />
+        <Route path="monitoramento" element={<MonitoramentoPage />} />
+        <Route path="relatorios" element={<RelatoriosPage />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </DesktopLayout>
