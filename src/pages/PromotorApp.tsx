@@ -5,15 +5,16 @@ import { MobileAppLayout } from "@/components/layouts/MobileAppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Home, MapPin, Camera, ListChecks, Calendar, AlertTriangle, ChevronRight, CheckCircle2, Clock } from "lucide-react";
+import { Home, MapPin, Camera, ListChecks, Calendar, AlertTriangle, ChevronRight, CheckCircle2, Clock, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 
 const items = [
   { to: "/app", label: "Início", icon: Home },
+  { to: "/app/agenda", label: "Agenda", icon: Calendar },
   { to: "/app/checkin", label: "Check-in", icon: MapPin },
   { to: "/app/execucao", label: "Execução", icon: ListChecks },
-  { to: "/app/historico", label: "Histórico", icon: Calendar },
+  { to: "/app/pagamentos", label: "Pagto", icon: Wallet },
 ];
 
 function PromotorHome() {
