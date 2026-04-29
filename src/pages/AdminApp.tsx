@@ -65,7 +65,7 @@ function AdminDashboard() {
       <Card className="p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display font-bold text-lg">Atividade recente</h2>
-          <Button asChild variant="outline" size="sm"><Link to="/monitoramento">Ver tudo</Link></Button>
+          <Button asChild variant="outline" size="sm"><Link to="/app/monitoramento">Ver tudo</Link></Button>
         </div>
         <div className="space-y-2">
           {recentes.length === 0 && <p className="text-sm text-muted-foreground py-4 text-center">Sem atividades recentes.</p>}
