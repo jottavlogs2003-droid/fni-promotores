@@ -25,6 +25,7 @@ const items = [
   { to: "/app/financeiro", label: "Financeiro", icon: DollarSign },
   { to: "/app/pagamentos", label: "Pagamentos", icon: Wallet },
   { to: "/app/faturas", label: "Faturas", icon: Receipt },
+  { to: "/app/auditoria", label: "Fechamento", icon: Lock },
   { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
   { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
