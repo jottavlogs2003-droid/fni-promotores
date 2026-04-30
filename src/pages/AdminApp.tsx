@@ -602,7 +602,9 @@ export default function AdminApp() {
             ]} />
         } />
         <Route path="monitoramento" element={<MonitoramentoPage />} />
+        <Route path="auditoria" element={<AuditoriaPage />} />
         <Route path="relatorios" element={<RelatoriosPage />} />
+        <Route path="*" element={<Navigate to="/app" replace />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </DesktopLayout>
