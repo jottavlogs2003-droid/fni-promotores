@@ -361,12 +361,24 @@ export function FaturasClientes() {
 }
 
 /* ---------------- ESCALA INTELIGENTE ---------------- */
+const PERIODOS = {
+  manha: { label: "Manhã", inicio: "08:00", fim: "14:00" },
+  tarde: { label: "Tarde", inicio: "14:00", fim: "20:00" },
+  dia: { label: "Dia inteiro (manhã + tarde)", inicio: "08:00", fim: "20:00" },
+} as const;
+type PeriodoKey = keyof typeof PERIODOS;
+
 export function EscalaAdmin() {
   const [escalas, setEscalas] = useState<any[]>([]);
   const [promotores, setPromotores] = useState<any[]>([]);
   const [lojas, setLojas] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
+  const [openProm, setOpenProm] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [periodo, setPeriodo] = useState<PeriodoKey>("manha");
+  const [horaIni, setHoraIni] = useState("08:00");
+  const [horaFim, setHoraFim] = useState("14:00");
+  const [custom, setCustom] = useState(false);
 
   async function load() {
     const { data } = await supabase.from("escalas")
@@ -374,11 +386,20 @@ export function EscalaAdmin() {
       .order("data", { ascending: false }).limit(200);
     setEscalas(data ?? []);
   }
+  async function loadPromotores() {
+    const { data } = await supabase.from("profiles").select("id, nome, tipo_promotor, jornada_horas, valor_diaria, permite_dupla_diaria");
+    setPromotores(data ?? []);
+  }
   useEffect(() => {
-    load();
-    supabase.from("profiles").select("id, nome, tipo_promotor, jornada_horas, valor_diaria, permite_dupla_diaria").then(({ data }) => setPromotores(data ?? []));
+    load(); loadPromotores();
     supabase.from("lojas").select("id, nome, cidade, cliente_id").eq("ativo", true).then(({ data }) => setLojas(data ?? []));
   }, []);
+
+  function aplicarPeriodo(p: PeriodoKey) {
+    setPeriodo(p);
+    setHoraIni(PERIODOS[p].inicio);
+    setHoraFim(PERIODOS[p].fim);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -388,23 +409,57 @@ export function EscalaAdmin() {
       const promotor_id = fd.get("promotor_id") as string;
       const loja_id = fd.get("loja_id") as string;
       const data = fd.get("data") as string;
-      const hora_inicio = fd.get("hora_inicio") as string;
-      const hora_fim = fd.get("hora_fim") as string;
-      const turno = Number(fd.get("turno") || 1);
 
-      const [hI, mI] = hora_inicio.split(":").map(Number);
-      const [hF, mF] = hora_fim.split(":").map(Number);
-      const dur = ((hF * 60 + mF) - (hI * 60 + mI)) / 60;
-      if (dur <= 0) throw new Error("Horário final deve ser após o inicial.");
-      const diarias = dur >= 12 ? 2 : 1;
+      // Se "dia inteiro", cria 2 escalas (manhã + tarde) — conta 2 diárias
+      const turnos = periodo === "dia" && !custom
+        ? [
+            { hora_inicio: PERIODOS.manha.inicio, hora_fim: PERIODOS.manha.fim, turno: 1 },
+            { hora_inicio: PERIODOS.tarde.inicio, hora_fim: PERIODOS.tarde.fim, turno: 2 },
+          ]
+        : [{ hora_inicio: horaIni, hora_fim: horaFim, turno: periodo === "tarde" ? 2 : 1 }];
 
-      const { error } = await supabase.from("escalas").insert({
-        promotor_id, loja_id, data, hora_inicio, hora_fim,
-        duracao_horas: dur, diarias, turno,
+      const inserts = turnos.map(t => {
+        const [hI, mI] = t.hora_inicio.split(":").map(Number);
+        const [hF, mF] = t.hora_fim.split(":").map(Number);
+        const dur = ((hF * 60 + mF) - (hI * 60 + mI)) / 60;
+        if (dur <= 0) throw new Error("Horário final deve ser após o inicial.");
+        return {
+          promotor_id, loja_id, data,
+          hora_inicio: t.hora_inicio, hora_fim: t.hora_fim,
+          duracao_horas: dur, diarias: dur >= 12 ? 2 : 1, turno: t.turno,
+        };
+      });
+
+      const { error } = await supabase.from("escalas").insert(inserts);
+      if (error) throw error;
+      toast.success(`${inserts.length} turno(s) criado(s)!`);
+      setOpen(false); load();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setBusy(false); }
+  }
+
+  async function criarPromotor(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const fd = new FormData(e.currentTarget);
+      const email = fd.get("email") as string;
+      const nome = fd.get("nome") as string;
+      const senha = (fd.get("senha") as string) || "Fni@2026";
+      const valor_diaria = Number(fd.get("valor_diaria") || 0);
+
+      // signUp cria o usuário; trigger handle_new_user já cria profile + role promotor
+      const redirectUrl = `${window.location.origin}/app`;
+      const { data, error } = await supabase.auth.signUp({
+        email, password: senha,
+        options: { emailRedirectTo: redirectUrl, data: { nome } },
       });
       if (error) throw error;
-      toast.success("Escala criada!");
-      setOpen(false); load();
+      if (data.user) {
+        await supabase.from("profiles").update({ nome, valor_diaria, telefone: fd.get("telefone") || null }).eq("id", data.user.id);
+      }
+      toast.success(`Promotor "${nome}" cadastrado!`);
+      setOpenProm(false); loadPromotores();
     } catch (err: any) { toast.error(err.message); }
     finally { setBusy(false); }
   }
@@ -421,41 +476,84 @@ export function EscalaAdmin() {
           <h1 className="text-3xl font-display font-bold">Escala</h1>
           <p className="text-foreground/70 text-sm">{escalas.length} turnos cadastrados</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button variant="brand"><Plus className="h-4 w-4" /> Novo turno</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Agendar turno</DialogTitle></DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div><Label>Promotor</Label>
-                <select name="promotor_id" required className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                  <option value="">Selecione</option>
-                  {promotores.map(p => <option key={p.id} value={p.id}>{p.nome} ({p.tipo_promotor ?? "—"} · {p.jornada_horas ?? 6}h)</option>)}
-                </select>
-              </div>
-              <div><Label>Loja</Label>
-                <select name="loja_id" required className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                  <option value="">Selecione</option>
-                  {lojas.map(l => <option key={l.id} value={l.id}>{l.nome} — {l.cidade}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Dialog open={openProm} onOpenChange={setOpenProm}>
+            <DialogTrigger asChild><Button variant="outline"><Plus className="h-4 w-4" /> Adicionar promotor</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Cadastrar novo promotor</DialogTitle></DialogHeader>
+              <form onSubmit={criarPromotor} className="space-y-3">
+                <div><Label>Nome completo</Label><Input name="nome" required /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Email</Label><Input name="email" type="email" required /></div>
+                  <div><Label>Telefone</Label><Input name="telefone" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Senha inicial</Label><Input name="senha" defaultValue="Fni@2026" /></div>
+                  <div><Label>Valor da diária (R$)</Label><Input name="valor_diaria" type="number" step="0.01" defaultValue="100" /></div>
+                </div>
+                <p className="text-xs text-foreground/70">Conta criada como promotor. Demais dados (PIX, jornada) podem ser ajustados em "Promotores".</p>
+                <Button type="submit" disabled={busy} variant="brand" className="w-full">
+                  {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Cadastrar
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button variant="brand"><Plus className="h-4 w-4" /> Novo turno</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Agendar turno</DialogTitle></DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <div><Label>Promotor</Label>
+                  <select name="promotor_id" required className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">Selecione</option>
+                    {promotores.map(p => <option key={p.id} value={p.id}>{p.nome} ({p.tipo_promotor ?? "—"} · {p.jornada_horas ?? 6}h)</option>)}
+                  </select>
+                </div>
+                <div><Label>Loja</Label>
+                  <select name="loja_id" required className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">Selecione</option>
+                    {lojas.map(l => <option key={l.id} value={l.id}>{l.nome} — {l.cidade}</option>)}
+                  </select>
+                </div>
                 <div><Label>Data</Label><Input type="date" name="data" required defaultValue={new Date().toISOString().slice(0, 10)} /></div>
-                <div><Label>Início</Label><Input type="time" name="hora_inicio" required defaultValue="08:00" /></div>
-                <div><Label>Fim</Label><Input type="time" name="hora_fim" required defaultValue="14:00" /></div>
-              </div>
-              <div><Label>Turno</Label>
-                <select name="turno" className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                  <option value="1">1º turno (manhã)</option>
-                  <option value="2">2º turno (tarde)</option>
-                </select>
-              </div>
-              <p className="text-xs text-foreground/70">Sistema calcula diárias automaticamente: ≥12h = 2 diárias, &lt;12h = 1 diária.</p>
-              <Button type="submit" disabled={busy} variant="brand" className="w-full">
-                {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Salvar
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+
+                <div>
+                  <Label>Período</Label>
+                  <div className="grid grid-cols-3 gap-2 mt-1">
+                    {(Object.keys(PERIODOS) as PeriodoKey[]).map(k => (
+                      <button type="button" key={k} onClick={() => { aplicarPeriodo(k); setCustom(false); }}
+                        className={`p-2 rounded-md border text-xs font-medium transition-base ${periodo === k && !custom ? "border-primary bg-primary/15 text-primary" : "border-input hover:bg-muted/40"}`}>
+                        {k === "manha" ? "🌅 Manhã" : k === "tarde" ? "🌇 Tarde" : "☀️ Manhã + Tarde"}
+                        <div className="text-[10px] opacity-70 mt-0.5">{PERIODOS[k].inicio}–{PERIODOS[k].fim}</div>
+                      </button>
+                    ))}
+                  </div>
+                  <label className="flex items-center gap-2 text-xs mt-2 cursor-pointer">
+                    <input type="checkbox" checked={custom} onChange={e => setCustom(e.target.checked)} />
+                    Horário personalizado
+                  </label>
+                </div>
+
+                {custom && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label>Início</Label><Input type="time" value={horaIni} onChange={e => setHoraIni(e.target.value)} required /></div>
+                    <div><Label>Fim</Label><Input type="time" value={horaFim} onChange={e => setHoraFim(e.target.value)} required /></div>
+                  </div>
+                )}
+
+                <p className="text-xs text-foreground/70">
+                  {periodo === "dia" && !custom
+                    ? "→ Serão criados 2 turnos (manhã + tarde) = 2 diárias."
+                    : "→ Calcula diárias automaticamente: ≥12h = 2 diárias, <12h = 1 diária."}
+                </p>
+                <Button type="submit" disabled={busy} variant="brand" className="w-full">
+                  {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Salvar
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
@@ -466,18 +564,20 @@ export function EscalaAdmin() {
               <th className="text-left p-3">Promotor</th>
               <th className="text-left p-3">Loja</th>
               <th className="text-left p-3">Horário</th>
+              <th className="text-left p-3">Turno</th>
               <th className="text-right p-3">Diárias</th>
               <th className="text-left p-3">Status</th>
               <th className="p-3"></th>
             </tr></thead>
             <tbody>
-              {escalas.length === 0 && <tr><td colSpan={7} className="p-8 text-center text-foreground/60">Nenhum turno agendado.</td></tr>}
+              {escalas.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-foreground/60">Nenhum turno agendado.</td></tr>}
               {escalas.map(e => (
                 <tr key={e.id} className="border-b border-border last:border-0 hover:bg-card/40">
                   <td className="p-3 text-xs">{new Date(e.data).toLocaleDateString("pt-BR")}</td>
                   <td className="p-3 font-medium">{e.profiles?.nome}</td>
                   <td className="p-3">{e.lojas?.nome}</td>
                   <td className="p-3 text-xs">{e.hora_inicio?.slice(0,5)} → {e.hora_fim?.slice(0,5)} ({e.duracao_horas}h)</td>
+                  <td className="p-3 text-xs">{e.turno === 2 ? "Tarde" : "Manhã"}</td>
                   <td className="p-3 text-right font-semibold">{Number(e.diarias).toFixed(1)}</td>
                   <td className="p-3"><Badge className={
                     e.status === "concluido" ? "bg-success text-success-foreground" :
