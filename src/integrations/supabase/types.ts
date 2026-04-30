@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          acao: string
+          created_at: string
+          dados_antes: Json | null
+          dados_depois: Json | null
+          id: string
+          registro_id: string | null
+          tabela: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: string
+          registro_id?: string | null
+          tabela: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: string
+          registro_id?: string | null
+          tabela?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       campanha_lojas: {
         Row: {
           campanha_id: string
@@ -399,6 +435,42 @@ export type Database = {
           total_horas?: number
           updated_at?: string
           valor_total?: number
+        }
+        Relationships: []
+      }
+      fechamentos_mensais: {
+        Row: {
+          ano: number
+          created_at: string
+          fechado_em: string
+          fechado_por: string
+          id: string
+          mes: number
+          observacoes: string | null
+          reaberto_em: string | null
+          reaberto_por: string | null
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          fechado_em?: string
+          fechado_por: string
+          id?: string
+          mes: number
+          observacoes?: string | null
+          reaberto_em?: string | null
+          reaberto_por?: string | null
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          fechado_em?: string
+          fechado_por?: string
+          id?: string
+          mes?: number
+          observacoes?: string | null
+          reaberto_em?: string | null
+          reaberto_por?: string | null
         }
         Relationships: []
       }
@@ -871,6 +943,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_mes_fechado: { Args: { _data: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "contratante" | "promotor"
