@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/Logo";
 import { signOut, useAuth } from "@/hooks/useAuth";
 import { LogOut } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 interface NavItem { to: string; label: string; icon: React.ComponentType<{ className?: string }>; }
 
@@ -21,7 +23,10 @@ export function MobileAppLayout({ items, children }: { items: NavItem[]; childre
               <p className="text-[11px] text-sidebar-foreground/60 leading-tight">Olá, {profile?.nome?.split(" ")[0]}</p>
             </div>
           </div>
-          <button onClick={signOut} className="p-2 -mr-2"><LogOut className="h-5 w-5" /></button>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <button onClick={signOut} className="p-2 -mr-2"><LogOut className="h-5 w-5" /></button>
+          </div>
         </div>
       </header>
 
@@ -43,6 +48,7 @@ export function MobileAppLayout({ items, children }: { items: NavItem[]; childre
           ))}
         </div>
       </nav>
+      <InstallPrompt />
     </div>
   );
 }
