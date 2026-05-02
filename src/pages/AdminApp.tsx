@@ -8,15 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wallet, Receipt, Lock } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wallet, Receipt, Lock, Wand2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { FinanceiroDashboard, PagamentosPromotores, FaturasClientes, EscalaAdmin } from "./admin/FinanceiroAdmin";
 import { AuditoriaPage } from "./admin/FechamentoAdmin";
+import GeradorEscala from "./admin/GeradorEscala";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
   { to: "/app/escala", label: "Escala", icon: Calendar },
+  { to: "/app/escala-auto", label: "Gerar escala", icon: Wand2 },
   { to: "/app/promotores", label: "Promotores", icon: Users },
   { to: "/app/clientes", label: "Clientes", icon: Building2 },
   { to: "/app/lojas", label: "Lojas", icon: Store },
@@ -564,6 +566,7 @@ export default function AdminApp() {
         <Route path="pagamentos" element={<PagamentosPromotores />} />
         <Route path="faturas" element={<FaturasClientes />} />
         <Route path="escala" element={<EscalaAdmin />} />
+        <Route path="escala-auto" element={<GeradorEscala />} />
         <Route path="lojas" element={
           <CrudList title="Lojas" table="lojas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "cidade", label: "Cidade" }, { key: "raio_metros", label: "Raio (m)" }]}
