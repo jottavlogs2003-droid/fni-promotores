@@ -6,6 +6,8 @@ import { signOut, useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { NotificationBell } from "@/components/NotificationBell";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { cn } from "@/lib/utils";
 
 interface NavItem { to: string; label: string; icon: React.ComponentType<{ className?: string }>; }
@@ -36,12 +38,13 @@ export function DesktopLayout({ items, children, title }: { items: NavItem[]; ch
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-sidebar-border pt-3 flex items-center gap-3">
+        <div className="border-t border-sidebar-border pt-3 flex items-center gap-2">
           <Avatar className="h-9 w-9"><AvatarImage src={profile?.avatar_url ?? undefined} /><AvatarFallback>{profile?.nome?.[0] ?? "U"}</AvatarFallback></Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{profile?.nome}</p>
             <p className="text-xs text-sidebar-foreground/60 truncate">{profile?.email}</p>
           </div>
+          <NotificationBell />
           <Button size="icon" variant="ghost" onClick={signOut} className="hover:bg-sidebar-accent text-sidebar-foreground"><LogOut className="h-4 w-4" /></Button>
         </div>
       </aside>
@@ -53,7 +56,10 @@ export function DesktopLayout({ items, children, title }: { items: NavItem[]; ch
             {openMobile ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <div className="flex items-center gap-2"><Logo size="sm" /><span className="text-sm font-display font-bold">{title}</span></div>
-          <button onClick={signOut} className="p-2"><LogOut className="h-5 w-5" /></button>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <button onClick={signOut} className="p-2"><LogOut className="h-5 w-5" /></button>
+          </div>
         </div>
         {openMobile && (
           <nav className="border-t border-sidebar-border p-2 space-y-1">
@@ -72,6 +78,7 @@ export function DesktopLayout({ items, children, title }: { items: NavItem[]; ch
       <main className="flex-1 min-w-0 pt-16 lg:pt-0">
         <div className="p-4 lg:p-8 max-w-7xl mx-auto">{children}</div>
       </main>
+      <InstallPrompt />
     </div>
   );
 }
