@@ -8,6 +8,7 @@ import { LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { OfflineBadge } from "@/components/OfflineBadge";
 import { cn } from "@/lib/utils";
 
 interface NavItem { to: string; label: string; icon: React.ComponentType<{ className?: string }>; }
@@ -79,6 +80,7 @@ export function DesktopLayout({ items, children, title }: { items: NavItem[]; ch
         <div className="p-4 lg:p-8 max-w-7xl mx-auto">{children}</div>
       </main>
       <InstallPrompt />
+      <OfflineBadge />
     </div>
   );
 }
