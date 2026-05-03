@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { FinanceiroDashboard, EscalaAdmin } from "./admin/FinanceiroAdmin";
+import { EscalaAdmin } from "./admin/FinanceiroAdmin";
 import GeradorEscala from "./admin/GeradorEscala";
 import MapaAoVivo from "./admin/MapaAoVivo";
 import FinanceiroHub from "./admin/FinanceiroHub";
