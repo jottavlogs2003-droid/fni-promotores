@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { FinanceiroDashboard, EscalaAdmin } from "./admin/FinanceiroAdmin";
@@ -402,9 +402,7 @@ export default function AdminApp() {
               { key: "valor_mensal", label: "Valor mensal (R$)", type: "number" },
             ]} />
         } />
-        <Route path="financeiro" element={<FinanceiroDashboard />} />
-        <Route path="pagamentos" element={<PagamentosPromotores />} />
-        <Route path="faturas" element={<FaturasClientes />} />
+        <Route path="financeiro" element={<FinanceiroHub />} />
         <Route path="escala" element={<EscalaAdmin />} />
         <Route path="escala-auto" element={<GeradorEscala />} />
         <Route path="lojas" element={
@@ -446,8 +444,10 @@ export default function AdminApp() {
         } />
         <Route path="monitoramento" element={<MonitoramentoPage />} />
         <Route path="mapa" element={<MapaAoVivo />} />
-        <Route path="auditoria" element={<AuditoriaPage />} />
-        <Route path="relatorios" element={<RelatoriosPage />} />
+        <Route path="auditoria" element={<Navigate to="/app/financeiro" replace />} />
+        <Route path="relatorios" element={<Navigate to="/app/financeiro" replace />} />
+        <Route path="pagamentos" element={<Navigate to="/app/financeiro" replace />} />
+        <Route path="faturas" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
