@@ -263,7 +263,7 @@ function MonitoramentoPage() {
   );
 }
 
-function RelatoriosPage() {
+export function RelatoriosPage() {
   const [tipo, setTipo] = useState<"loja" | "promotor" | "cliente" | "detalhado">("loja");
   const [inicio, setInicio] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0,10); });
   const [fim, setFim] = useState(() => new Date().toISOString().slice(0,10));

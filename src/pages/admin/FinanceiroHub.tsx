@@ -3,8 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LayoutDashboard, Wallet, Receipt, Lock, FileText, History } from "lucide-react";
 import { FinanceiroDashboard, PagamentosPromotores, FaturasClientes } from "./FinanceiroAdmin";
-import { FechamentoAdmin, AuditoriaPage } from "./FechamentoAdmin";
-import RelatoriosAdmin from "./RelatoriosAdmin";
+import { FechamentoMensal, AuditLog } from "./FechamentoAdmin";
+import { RelatoriosPage } from "../AdminApp";
 
 export default function FinanceiroHub() {
   const [tab, setTab] = useState("dashboard");
@@ -27,9 +27,9 @@ export default function FinanceiroHub() {
           <TabsContent value="dashboard" className="m-0"><FinanceiroDashboard /></TabsContent>
           <TabsContent value="pagamentos" className="m-0"><PagamentosPromotores /></TabsContent>
           <TabsContent value="faturas" className="m-0"><FaturasClientes /></TabsContent>
-          <TabsContent value="fechamento" className="m-0"><FechamentoAdmin /></TabsContent>
-          <TabsContent value="auditoria" className="m-0"><AuditoriaPage /></TabsContent>
-          <TabsContent value="relatorios" className="m-0"><RelatoriosAdmin /></TabsContent>
+          <TabsContent value="fechamento" className="m-0"><FechamentoMensal /></TabsContent>
+          <TabsContent value="auditoria" className="m-0"><AuditLog /></TabsContent>
+          <TabsContent value="relatorios" className="m-0"><RelatoriosPage /></TabsContent>
         </Card>
       </Tabs>
     </div>
