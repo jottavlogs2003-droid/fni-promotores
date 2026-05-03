@@ -410,11 +410,12 @@ export function EscalaAdmin() {
       const loja_id = fd.get("loja_id") as string;
       const data = fd.get("data") as string;
 
-      // Se "dia inteiro", cria 2 escalas (manhã + tarde) — conta 2 diárias
-      const turnos = periodo === "dia" && !custom
+      // Se "Manhã + Tarde": cria 2 escalas com horários editados (manhã e tarde).
+      // Caso contrário: 1 escala com horaIni/horaFim editados livremente.
+      const turnos = periodo === "dia"
         ? [
-            { hora_inicio: PERIODOS.manha.inicio, hora_fim: PERIODOS.manha.fim, turno: 1 },
-            { hora_inicio: PERIODOS.tarde.inicio, hora_fim: PERIODOS.tarde.fim, turno: 2 },
+            { hora_inicio: horaIni, hora_fim: PERIODOS.manha.fim, turno: 1 },
+            { hora_inicio: PERIODOS.tarde.inicio, hora_fim: horaFim, turno: 2 },
           ]
         : [{ hora_inicio: horaIni, hora_fim: horaFim, turno: periodo === "tarde" ? 2 : 1 }];
 
@@ -523,30 +524,24 @@ export function EscalaAdmin() {
                   <Label>Período</Label>
                   <div className="grid grid-cols-3 gap-2 mt-1">
                     {(Object.keys(PERIODOS) as PeriodoKey[]).map(k => (
-                      <button type="button" key={k} onClick={() => { aplicarPeriodo(k); setCustom(false); }}
-                        className={`p-2 rounded-md border text-xs font-medium transition-base ${periodo === k && !custom ? "border-primary bg-primary/15 text-primary" : "border-input hover:bg-muted/40"}`}>
+                      <button type="button" key={k} onClick={() => aplicarPeriodo(k)}
+                        className={`p-2 rounded-md border text-xs font-medium transition-base ${periodo === k ? "border-primary bg-primary/15 text-primary" : "border-input hover:bg-muted/40"}`}>
                         {k === "manha" ? "🌅 Manhã" : k === "tarde" ? "🌇 Tarde" : "☀️ Manhã + Tarde"}
                         <div className="text-[10px] opacity-70 mt-0.5">{PERIODOS[k].inicio}–{PERIODOS[k].fim}</div>
                       </button>
                     ))}
                   </div>
-                  <label className="flex items-center gap-2 text-xs mt-2 cursor-pointer">
-                    <input type="checkbox" checked={custom} onChange={e => setCustom(e.target.checked)} />
-                    Horário personalizado
-                  </label>
                 </div>
 
-                {custom && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <div><Label>Início</Label><Input type="time" value={horaIni} onChange={e => setHoraIni(e.target.value)} required /></div>
-                    <div><Label>Fim</Label><Input type="time" value={horaFim} onChange={e => setHoraFim(e.target.value)} required /></div>
-                  </div>
-                )}
+                <div className="grid grid-cols-2 gap-2">
+                  <div><Label>{periodo === "dia" ? "Início (manhã)" : "Início"}</Label><Input type="time" value={horaIni} onChange={e => setHoraIni(e.target.value)} required /></div>
+                  <div><Label>{periodo === "dia" ? "Fim (tarde)" : "Fim"}</Label><Input type="time" value={horaFim} onChange={e => setHoraFim(e.target.value)} required /></div>
+                </div>
 
                 <p className="text-xs text-foreground/70">
-                  {periodo === "dia" && !custom
-                    ? "→ Serão criados 2 turnos (manhã + tarde) = 2 diárias."
-                    : "→ Calcula diárias automaticamente: ≥12h = 2 diárias, <12h = 1 diária."}
+                  {periodo === "dia"
+                    ? "→ 2 turnos: manhã (início → 14:00) e tarde (14:00 → fim) = 2 diárias."
+                    : "→ ≥12h = 2 diárias, <12h = 1 diária. Edite o horário conforme cada promotor."}
                 </p>
                 <Button type="submit" disabled={busy} variant="brand" className="w-full">
                   {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Salvar
