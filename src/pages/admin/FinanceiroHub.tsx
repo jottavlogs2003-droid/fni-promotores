@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LayoutDashboard, Wallet, Receipt, Lock, FileText, History } from "lucide-react";
 import { FinanceiroDashboard, PagamentosPromotores, FaturasClientes } from "./FinanceiroAdmin";
 import { FechamentoMensal, AuditLog } from "./FechamentoAdmin";
-import { RelatoriosPage } from "../AdminApp";
+import RelatoriosAdmin from "./RelatoriosAdmin";
 
 export default function FinanceiroHub() {
   const [tab, setTab] = useState("dashboard");
@@ -29,7 +29,7 @@ export default function FinanceiroHub() {
           <TabsContent value="faturas" className="m-0"><FaturasClientes /></TabsContent>
           <TabsContent value="fechamento" className="m-0"><FechamentoMensal /></TabsContent>
           <TabsContent value="auditoria" className="m-0"><AuditLog /></TabsContent>
-          <TabsContent value="relatorios" className="m-0"><RelatoriosPage /></TabsContent>
+          <TabsContent value="relatorios" className="m-0"><RelatoriosAdmin /></TabsContent>
         </Card>
       </Tabs>
     </div>
