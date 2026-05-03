@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wallet, Receipt, Lock, Wand2, Map } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wallet, Receipt, Lock, Wand2, Map as MapIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { FinanceiroDashboard, PagamentosPromotores, FaturasClientes, EscalaAdmin } from "./admin/FinanceiroAdmin";
@@ -18,7 +18,7 @@ import MapaAoVivo from "./admin/MapaAoVivo";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/app/mapa", label: "Mapa ao vivo", icon: Map },
+  { to: "/app/mapa", label: "Mapa ao vivo", icon: MapIcon },
   { to: "/app/escala", label: "Escala", icon: Calendar },
   { to: "/app/escala-auto", label: "Gerar escala", icon: Wand2 },
   { to: "/app/promotores", label: "Promotores", icon: Users },
