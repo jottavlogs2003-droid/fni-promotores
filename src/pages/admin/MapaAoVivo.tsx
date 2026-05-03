@@ -60,7 +60,7 @@ export default function MapaAoVivo() {
   useEffect(() => {
     carregar();
     const ch = supabase
-      .channel("mapa-ativos")
+      .channel(`mapa-ativos-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "check_ins" }, () => carregar())
       .subscribe();
     const id = setInterval(carregar, 30_000);
