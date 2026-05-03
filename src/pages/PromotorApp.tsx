@@ -157,11 +157,11 @@ function CheckInPage() {
       }
     }
     setBusy(true);
-    try {
+    const { enqueueCheckIn, fileToDataUrl } = await import("@/lib/offlineQueue");
+    const tryOnline = async () => {
       const path = `${user.id}/${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage.from("selfies-checkin").upload(path, selfie);
       if (upErr) throw upErr;
-
       const { error: insErr } = await supabase.from("check_ins").insert({
         promotor_id: user.id, loja_id: selectedLoja,
         latitude_entrada: position.coords.latitude,
@@ -170,9 +170,30 @@ function CheckInPage() {
         distancia_metros: dist,
       });
       if (insErr) throw insErr;
+    };
+    try {
+      if (!navigator.onLine) throw new Error("offline");
+      await tryOnline();
       window.location.href = "/app/execucao";
     } catch (err: any) {
-      setError(err.message);
+      // Salva offline e segue
+      try {
+        const dataUrl = await fileToDataUrl(selfie);
+        await enqueueCheckIn({
+          promotor_id: user.id,
+          loja_id: selectedLoja,
+          latitude_entrada: position.coords.latitude,
+          longitude_entrada: position.coords.longitude,
+          distancia_metros: dist,
+          selfieDataUrl: dataUrl,
+          selfieName: selfie.name || "selfie.jpg",
+        });
+        setError(null);
+        alert("Check-in salvo offline. Será enviado quando a conexão voltar.");
+        window.location.href = "/app";
+      } catch (e: any) {
+        setError(e.message ?? String(err));
+      }
     } finally { setBusy(false); }
   }
 

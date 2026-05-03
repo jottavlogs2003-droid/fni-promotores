@@ -8,15 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wallet, Receipt, Lock, Wand2 } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wallet, Receipt, Lock, Wand2, Map } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { FinanceiroDashboard, PagamentosPromotores, FaturasClientes, EscalaAdmin } from "./admin/FinanceiroAdmin";
 import { AuditoriaPage } from "./admin/FechamentoAdmin";
 import GeradorEscala from "./admin/GeradorEscala";
+import MapaAoVivo from "./admin/MapaAoVivo";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/app/mapa", label: "Mapa ao vivo", icon: Map },
   { to: "/app/escala", label: "Escala", icon: Calendar },
   { to: "/app/escala-auto", label: "Gerar escala", icon: Wand2 },
   { to: "/app/promotores", label: "Promotores", icon: Users },
@@ -605,6 +607,7 @@ export default function AdminApp() {
             ]} />
         } />
         <Route path="monitoramento" element={<MonitoramentoPage />} />
+        <Route path="mapa" element={<MapaAoVivo />} />
         <Route path="auditoria" element={<AuditoriaPage />} />
         <Route path="relatorios" element={<RelatoriosPage />} />
         <Route path="*" element={<Navigate to="/app" replace />} />

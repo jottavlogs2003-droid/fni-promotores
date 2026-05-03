@@ -6,6 +6,7 @@ import { signOut, useAuth } from "@/hooks/useAuth";
 import { LogOut } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { OfflineBadge } from "@/components/OfflineBadge";
 
 interface NavItem { to: string; label: string; icon: React.ComponentType<{ className?: string }>; }
 
@@ -49,6 +50,7 @@ export function MobileAppLayout({ items, children }: { items: NavItem[]; childre
         </div>
       </nav>
       <InstallPrompt />
+      <OfflineBadge />
     </div>
   );
 }
