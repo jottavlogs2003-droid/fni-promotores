@@ -249,7 +249,7 @@ function ExecucaoPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("check_ins").select("*, lojas(nome, cliente_id)").eq("promotor_id", user.id).is("hora_saida", null).order("hora_entrada", { ascending: false }).limit(1).maybeSingle()
+    supabase.from("check_ins").select("*, lojas(nome, cliente_id, requer_execucao)").eq("promotor_id", user.id).is("hora_saida", null).order("hora_entrada", { ascending: false }).limit(1).maybeSingle()
       .then(({ data }) => setOpenCheckIn(data));
   }, [user]);
 
