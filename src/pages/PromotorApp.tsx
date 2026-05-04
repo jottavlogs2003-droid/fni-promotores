@@ -264,21 +264,23 @@ function ExecucaoPage() {
     }
   }
 
+  const requerExecucao = openCheckIn?.lojas?.requer_execucao !== false;
+
   async function handleFinalizar() {
     if (!openCheckIn || !user) return;
     setBusy(true);
     try {
-      const score = Object.values(checklist).filter(Boolean).length * 25;
-      const { data: exec, error: execErr } = await supabase.from("execucoes").insert({
-        check_in_id: openCheckIn.id, promotor_id: user.id, loja_id: openCheckIn.loja_id,
-        ...checklist, observacoes: obs, score,
-      }).select().single();
-      if (execErr) throw execErr;
+      if (requerExecucao) {
+        const score = Object.values(checklist).filter(Boolean).length * 25;
+        const { error: execErr } = await supabase.from("execucoes").insert({
+          check_in_id: openCheckIn.id, promotor_id: user.id, loja_id: openCheckIn.loja_id,
+          ...checklist, observacoes: obs, score,
+        });
+        if (execErr) throw execErr;
+        await uploadFotos(fotosAntes, "antes", openCheckIn.id, openCheckIn.loja_id);
+        await uploadFotos(fotosDepois, "depois", openCheckIn.id, openCheckIn.loja_id);
+      }
 
-      await uploadFotos(fotosAntes, "antes", openCheckIn.id, openCheckIn.loja_id);
-      await uploadFotos(fotosDepois, "depois", openCheckIn.id, openCheckIn.loja_id);
-
-      // close check-in
       navigator.geolocation.getCurrentPosition(async pos => {
         await supabase.from("check_ins").update({
           hora_saida: new Date().toISOString(),
