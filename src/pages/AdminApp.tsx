@@ -189,7 +189,7 @@ function CrudList({ title, table, columns, formFields, parentField, rowActions }
     formFields.forEach(f => {
       const v = fd.get(f.key);
       if (v !== null && v !== "") {
-        payload[f.key] = f.type === "number" ? Number(v) : v;
+        payload[f.key] = f.type === "number" ? Number(v) : f.type === "boolean" ? v === "true" : v;
       }
     });
     const { error } = await (supabase as any).from(table).insert(payload);
