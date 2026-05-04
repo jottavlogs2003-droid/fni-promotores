@@ -145,8 +145,8 @@ function MinhasFaturas() {
           <tbody>
             {faturas.length === 0 ? <tr><td colSpan={7} className="p-8 text-center text-foreground/60">Nenhuma fatura ainda.</td></tr> :
               faturas.map(f => (
-                <>
-                  <tr key={f.id} className="border-b border-border hover:bg-card/40">
+                <Fragment key={f.id}>
+                  <tr className="border-b border-border hover:bg-card/40">
                     <td className="p-3 font-mono text-xs">{f.numero_fatura}</td>
                     <td className="p-3 text-xs">{f.periodo_inicio} → {f.periodo_fim}</td>
                     <td className="p-3 text-right">{Number(f.total_diarias).toFixed(1)}</td>
@@ -178,7 +178,7 @@ function MinhasFaturas() {
                       )}
                     </td></tr>
                   )}
-                </>
+                </Fragment>
               ))}
           </tbody>
         </table>
