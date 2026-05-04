@@ -122,11 +122,47 @@ function AdminDashboard() {
   );
 }
 
+// Dialog: criar login para contratante
+function CriarLoginContratanteDialog({ cliente, onDone }: { cliente: any; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    const fd = new FormData(e.currentTarget);
+    const { data: { session } } = await supabase.auth.getSession();
+    const { data, error } = await supabase.functions.invoke("create-contratante-user", {
+      body: { email: fd.get("email"), password: fd.get("password"), nome: fd.get("nome"), cliente_id: cliente.id },
+      headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
+    });
+    setBusy(false);
+    if (error || (data as any)?.error) { toast.error(error?.message ?? (data as any).error); return; }
+    toast.success("Login criado!"); setOpen(false); onDone();
+  }
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild><Button size="sm" variant="outline">+ Login</Button></DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Criar login para {cliente.nome}</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          <div><Label>Nome</Label><Input name="nome" defaultValue={cliente.responsavel ?? cliente.nome} required /></div>
+          <div><Label>Email</Label><Input name="email" type="email" defaultValue={cliente.email_contato ?? ""} required /></div>
+          <div><Label>Senha provisória</Label><Input name="password" type="text" minLength={6} defaultValue="Fni@2026" required /></div>
+          <Button type="submit" variant="brand" disabled={busy} className="w-full">
+            {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Criar acesso
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // Generic CRUD list
-function CrudList({ title, table, columns, formFields, parentField }: {
+function CrudList({ title, table, columns, formFields, parentField, rowActions }: {
   title: string; table: string; columns: { key: string; label: string }[];
   formFields: { key: string; label: string; type?: string; required?: boolean; options?: { value: string; label: string }[] }[];
   parentField?: string;
+  rowActions?: (item: any, reload: () => void) => React.ReactNode;
 }) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
