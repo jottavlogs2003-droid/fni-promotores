@@ -222,10 +222,10 @@ function CheckInPage() {
         </Card>
 
         <Card className="p-4 space-y-3">
-          <label className="text-sm font-medium flex items-center gap-2"><Camera className="h-4 w-4" /> Selfie</label>
-          <input type="file" accept="image/*" capture="user" onChange={e => setSelfie(e.target.files?.[0] ?? null)} required
-            className="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-secondary file:text-secondary-foreground file:font-medium" />
-          {selfie && <p className="text-xs text-success">✓ {selfie.name}</p>}
+          <label className="text-sm font-medium flex items-center gap-2"><Camera className="h-4 w-4" /> Selfie ao vivo</label>
+          <p className="text-xs text-muted-foreground">A foto deve ser tirada agora pela câmera. Acesso à galeria está desativado.</p>
+          <LiveCamera facing="user" onCapture={f => setSelfie(f)} label="Abrir câmera frontal" />
+          {selfie && <p className="text-xs text-success">✓ Foto pronta</p>}
         </Card>
 
         {error && <Card className="p-3 bg-destructive/10 border-destructive/30 text-destructive text-sm">{error}</Card>}
