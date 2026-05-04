@@ -427,6 +427,7 @@ export default function AdminApp() {
         <Route path="promotores" element={<PromotoresAdmin />} />
         <Route path="clientes" element={
           <CrudList title="Clientes" table="clientes" columns={[{ key: "nome", label: "Nome" }, { key: "responsavel", label: "Responsável" }, { key: "tipo_cobranca", label: "Cobrança" }, { key: "valor_diaria_cobrada", label: "R$/diária" }]}
+            rowActions={(it, reload) => <CriarLoginContratanteDialog cliente={it} onDone={reload} />}
             formFields={[
               { key: "nome", label: "Nome da empresa", required: true },
               { key: "responsavel", label: "Responsável" },
@@ -444,7 +445,7 @@ export default function AdminApp() {
         <Route path="escala-auto" element={<GeradorEscala />} />
         <Route path="lojas" element={
           <CrudList title="Lojas" table="lojas" parentField="cliente_id"
-            columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "cidade", label: "Cidade" }, { key: "raio_metros", label: "Raio (m)" }]}
+            columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "cidade", label: "Cidade" }, { key: "raio_metros", label: "Raio (m)" }, { key: "requer_execucao", label: "Execução" }]}
             formFields={[
               { key: "cliente_id", label: "Cliente", required: true },
               { key: "nome", label: "Nome", required: true },
@@ -454,6 +455,7 @@ export default function AdminApp() {
               { key: "latitude", label: "Latitude", type: "number" },
               { key: "longitude", label: "Longitude", type: "number" },
               { key: "raio_metros", label: "Raio em metros", type: "number" },
+              { key: "requer_execucao", label: "Exige execução (fotos/checklist)?", type: "boolean", options: [{ value: "true", label: "Sim" }, { value: "false", label: "Não — apenas ponto" }] },
             ]} />
         } />
         <Route path="produtos" element={
