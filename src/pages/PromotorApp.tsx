@@ -317,40 +317,46 @@ function ExecucaoPage() {
   return (
     <div className="space-y-4 animate-fade-in-up">
       <div>
-        <h1 className="text-2xl font-display font-bold">Execução em loja</h1>
+        <h1 className="text-2xl font-display font-bold">{requerExecucao ? "Execução em loja" : "Encerrar ponto"}</h1>
         <p className="text-sm text-muted-foreground">{openCheckIn.lojas?.nome}</p>
       </div>
 
-      <Card className="p-4 space-y-3">
-        <h2 className="font-semibold text-sm">Checklist</h2>
-        {items.map(it => (
-          <label key={it.key} className="flex items-center gap-3 py-2 cursor-pointer">
-            <input type="checkbox" checked={(checklist as any)[it.key]} onChange={e => setChecklist(s => ({ ...s, [it.key]: e.target.checked }))}
-              className="h-5 w-5 rounded border-input accent-primary" />
-            <span className="text-sm">{it.label}</span>
-          </label>
-        ))}
-      </Card>
+      {requerExecucao ? (
+        <>
+          <Card className="p-4 space-y-3">
+            <h2 className="font-semibold text-sm">Checklist</h2>
+            {items.map(it => (
+              <label key={it.key} className="flex items-center gap-3 py-2 cursor-pointer">
+                <input type="checkbox" checked={(checklist as any)[it.key]} onChange={e => setChecklist(s => ({ ...s, [it.key]: e.target.checked }))}
+                  className="h-5 w-5 rounded border-input accent-primary" />
+                <span className="text-sm">{it.label}</span>
+              </label>
+            ))}
+          </Card>
 
-      <Card className="p-4 space-y-3">
-        <h2 className="font-semibold text-sm flex items-center gap-2"><Camera className="h-4 w-4" /> Fotos antes</h2>
-        <input type="file" accept="image/*" capture="environment" multiple onChange={e => setFotosAntes(Array.from(e.target.files ?? []))}
-          className="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-secondary file:text-secondary-foreground file:font-medium" />
-        {fotosAntes.length > 0 && <p className="text-xs text-success">{fotosAntes.length} foto(s)</p>}
-      </Card>
+          <Card className="p-4 space-y-3">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><Camera className="h-4 w-4" /> Foto antes (ao vivo)</h2>
+            <LiveCamera facing="environment" onCapture={f => setFotosAntes(s => [...s, f])} label="Tirar foto antes" />
+            {fotosAntes.length > 0 && <p className="text-xs text-success">{fotosAntes.length} foto(s) capturada(s)</p>}
+          </Card>
 
-      <Card className="p-4 space-y-3">
-        <h2 className="font-semibold text-sm flex items-center gap-2"><Camera className="h-4 w-4" /> Fotos depois</h2>
-        <input type="file" accept="image/*" capture="environment" multiple onChange={e => setFotosDepois(Array.from(e.target.files ?? []))}
-          className="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-secondary file:text-secondary-foreground file:font-medium" />
-        {fotosDepois.length > 0 && <p className="text-xs text-success">{fotosDepois.length} foto(s)</p>}
-      </Card>
+          <Card className="p-4 space-y-3">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><Camera className="h-4 w-4" /> Foto depois (ao vivo)</h2>
+            <LiveCamera facing="environment" onCapture={f => setFotosDepois(s => [...s, f])} label="Tirar foto depois" />
+            {fotosDepois.length > 0 && <p className="text-xs text-success">{fotosDepois.length} foto(s) capturada(s)</p>}
+          </Card>
 
-      <Card className="p-4 space-y-3">
-        <h2 className="font-semibold text-sm">Observações</h2>
-        <textarea value={obs} onChange={e => setObs(e.target.value)} rows={3} maxLength={1000}
-          className="w-full rounded-lg border border-input bg-background p-3 text-sm" placeholder="Comentários sobre a execução..." />
-      </Card>
+          <Card className="p-4 space-y-3">
+            <h2 className="font-semibold text-sm">Observações</h2>
+            <textarea value={obs} onChange={e => setObs(e.target.value)} rows={3} maxLength={1000}
+              className="w-full rounded-lg border border-input bg-background p-3 text-sm" placeholder="Comentários sobre a execução..." />
+          </Card>
+        </>
+      ) : (
+        <Card className="p-5 text-sm text-muted-foreground">
+          Esta loja não exige execução de fotos/checklist. Ao finalizar, seu ponto será encerrado.
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <Button asChild variant="outline" size="lg"><Link to="/app/ruptura-validade">Ruptura/Validade</Link></Button>
