@@ -252,7 +252,8 @@ function CrudList({ title, table, columns, formFields, parentField, rowActions }
                 <tr><td colSpan={columns.length} className="p-8 text-center text-muted-foreground">Nada cadastrado ainda.</td></tr>
               ) : items.map(it => (
                 <tr key={it.id} className="border-b border-border last:border-0 hover:bg-muted/30">
-                  {columns.map(c => <td key={c.key} className="p-3">{c.key === "cliente" ? it.clientes?.nome : String(it[c.key] ?? "—")}</td>)}
+                  {columns.map(c => <td key={c.key} className="p-3">{c.key === "cliente" ? it.clientes?.nome : c.key === "requer_execucao" ? (it.requer_execucao ? "Sim" : "Não") : String(it[c.key] ?? "—")}</td>)}
+                  {rowActions && <td className="p-3 text-right">{rowActions(it, load)}</td>}
                 </tr>
               ))}
             </tbody>
