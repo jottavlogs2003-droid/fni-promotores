@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Home, MapPin, Camera, ListChecks, Calendar, AlertTriangle, ChevronRight, CheckCircle2, Clock, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
+import { LiveCamera } from "@/components/LiveCamera";
 
 const items = [
   { to: "/app", label: "Início", icon: Home },
