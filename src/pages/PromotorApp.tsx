@@ -175,7 +175,7 @@ function CheckInPage() {
     try {
       if (!navigator.onLine) throw new Error("offline");
       await tryOnline();
-      window.location.href = "/app/execucao";
+      window.location.href = loja?.requer_execucao === false ? "/app" : "/app/execucao";
     } catch (err: any) {
       // Salva offline e segue
       try {
