@@ -550,6 +550,7 @@ export type Database = {
           longitude: number | null
           nome: string
           raio_metros: number
+          requer_execucao: boolean
           updated_at: string
         }
         Insert: {
@@ -566,6 +567,7 @@ export type Database = {
           longitude?: number | null
           nome: string
           raio_metros?: number
+          requer_execucao?: boolean
           updated_at?: string
         }
         Update: {
@@ -582,6 +584,7 @@ export type Database = {
           longitude?: number | null
           nome?: string
           raio_metros?: number
+          requer_execucao?: boolean
           updated_at?: string
         }
         Relationships: [

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Home, MapPin, Camera, ListChecks, Calendar, AlertTriangle, ChevronRight, CheckCircle2, Clock, Wallet } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
+import { LiveCamera } from "@/components/LiveCamera";
 
 const items = [
   { to: "/app", label: "Início", icon: Home },
@@ -174,7 +175,7 @@ function CheckInPage() {
     try {
       if (!navigator.onLine) throw new Error("offline");
       await tryOnline();
-      window.location.href = "/app/execucao";
+      window.location.href = loja?.requer_execucao === false ? "/app" : "/app/execucao";
     } catch (err: any) {
       // Salva offline e segue
       try {
@@ -221,10 +222,10 @@ function CheckInPage() {
         </Card>
 
         <Card className="p-4 space-y-3">
-          <label className="text-sm font-medium flex items-center gap-2"><Camera className="h-4 w-4" /> Selfie</label>
-          <input type="file" accept="image/*" capture="user" onChange={e => setSelfie(e.target.files?.[0] ?? null)} required
-            className="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-secondary file:text-secondary-foreground file:font-medium" />
-          {selfie && <p className="text-xs text-success">✓ {selfie.name}</p>}
+          <label className="text-sm font-medium flex items-center gap-2"><Camera className="h-4 w-4" /> Selfie ao vivo</label>
+          <p className="text-xs text-muted-foreground">A foto deve ser tirada agora pela câmera. Acesso à galeria está desativado.</p>
+          <LiveCamera facing="user" onCapture={f => setSelfie(f)} label="Abrir câmera frontal" />
+          {selfie && <p className="text-xs text-success">✓ Foto pronta</p>}
         </Card>
 
         {error && <Card className="p-3 bg-destructive/10 border-destructive/30 text-destructive text-sm">{error}</Card>}
@@ -248,7 +249,7 @@ function ExecucaoPage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("check_ins").select("*, lojas(nome, cliente_id)").eq("promotor_id", user.id).is("hora_saida", null).order("hora_entrada", { ascending: false }).limit(1).maybeSingle()
+    supabase.from("check_ins").select("*, lojas(nome, cliente_id, requer_execucao)").eq("promotor_id", user.id).is("hora_saida", null).order("hora_entrada", { ascending: false }).limit(1).maybeSingle()
       .then(({ data }) => setOpenCheckIn(data));
   }, [user]);
 
@@ -263,21 +264,23 @@ function ExecucaoPage() {
     }
   }
 
+  const requerExecucao = openCheckIn?.lojas?.requer_execucao !== false;
+
   async function handleFinalizar() {
     if (!openCheckIn || !user) return;
     setBusy(true);
     try {
-      const score = Object.values(checklist).filter(Boolean).length * 25;
-      const { data: exec, error: execErr } = await supabase.from("execucoes").insert({
-        check_in_id: openCheckIn.id, promotor_id: user.id, loja_id: openCheckIn.loja_id,
-        ...checklist, observacoes: obs, score,
-      }).select().single();
-      if (execErr) throw execErr;
+      if (requerExecucao) {
+        const score = Object.values(checklist).filter(Boolean).length * 25;
+        const { error: execErr } = await supabase.from("execucoes").insert({
+          check_in_id: openCheckIn.id, promotor_id: user.id, loja_id: openCheckIn.loja_id,
+          ...checklist, observacoes: obs, score,
+        });
+        if (execErr) throw execErr;
+        await uploadFotos(fotosAntes, "antes", openCheckIn.id, openCheckIn.loja_id);
+        await uploadFotos(fotosDepois, "depois", openCheckIn.id, openCheckIn.loja_id);
+      }
 
-      await uploadFotos(fotosAntes, "antes", openCheckIn.id, openCheckIn.loja_id);
-      await uploadFotos(fotosDepois, "depois", openCheckIn.id, openCheckIn.loja_id);
-
-      // close check-in
       navigator.geolocation.getCurrentPosition(async pos => {
         await supabase.from("check_ins").update({
           hora_saida: new Date().toISOString(),
@@ -314,40 +317,46 @@ function ExecucaoPage() {
   return (
     <div className="space-y-4 animate-fade-in-up">
       <div>
-        <h1 className="text-2xl font-display font-bold">Execução em loja</h1>
+        <h1 className="text-2xl font-display font-bold">{requerExecucao ? "Execução em loja" : "Encerrar ponto"}</h1>
         <p className="text-sm text-muted-foreground">{openCheckIn.lojas?.nome}</p>
       </div>
 
-      <Card className="p-4 space-y-3">
-        <h2 className="font-semibold text-sm">Checklist</h2>
-        {items.map(it => (
-          <label key={it.key} className="flex items-center gap-3 py-2 cursor-pointer">
-            <input type="checkbox" checked={(checklist as any)[it.key]} onChange={e => setChecklist(s => ({ ...s, [it.key]: e.target.checked }))}
-              className="h-5 w-5 rounded border-input accent-primary" />
-            <span className="text-sm">{it.label}</span>
-          </label>
-        ))}
-      </Card>
+      {requerExecucao ? (
+        <>
+          <Card className="p-4 space-y-3">
+            <h2 className="font-semibold text-sm">Checklist</h2>
+            {items.map(it => (
+              <label key={it.key} className="flex items-center gap-3 py-2 cursor-pointer">
+                <input type="checkbox" checked={(checklist as any)[it.key]} onChange={e => setChecklist(s => ({ ...s, [it.key]: e.target.checked }))}
+                  className="h-5 w-5 rounded border-input accent-primary" />
+                <span className="text-sm">{it.label}</span>
+              </label>
+            ))}
+          </Card>
 
-      <Card className="p-4 space-y-3">
-        <h2 className="font-semibold text-sm flex items-center gap-2"><Camera className="h-4 w-4" /> Fotos antes</h2>
-        <input type="file" accept="image/*" capture="environment" multiple onChange={e => setFotosAntes(Array.from(e.target.files ?? []))}
-          className="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-secondary file:text-secondary-foreground file:font-medium" />
-        {fotosAntes.length > 0 && <p className="text-xs text-success">{fotosAntes.length} foto(s)</p>}
-      </Card>
+          <Card className="p-4 space-y-3">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><Camera className="h-4 w-4" /> Foto antes (ao vivo)</h2>
+            <LiveCamera facing="environment" onCapture={f => setFotosAntes(s => [...s, f])} label="Tirar foto antes" />
+            {fotosAntes.length > 0 && <p className="text-xs text-success">{fotosAntes.length} foto(s) capturada(s)</p>}
+          </Card>
 
-      <Card className="p-4 space-y-3">
-        <h2 className="font-semibold text-sm flex items-center gap-2"><Camera className="h-4 w-4" /> Fotos depois</h2>
-        <input type="file" accept="image/*" capture="environment" multiple onChange={e => setFotosDepois(Array.from(e.target.files ?? []))}
-          className="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-secondary file:text-secondary-foreground file:font-medium" />
-        {fotosDepois.length > 0 && <p className="text-xs text-success">{fotosDepois.length} foto(s)</p>}
-      </Card>
+          <Card className="p-4 space-y-3">
+            <h2 className="font-semibold text-sm flex items-center gap-2"><Camera className="h-4 w-4" /> Foto depois (ao vivo)</h2>
+            <LiveCamera facing="environment" onCapture={f => setFotosDepois(s => [...s, f])} label="Tirar foto depois" />
+            {fotosDepois.length > 0 && <p className="text-xs text-success">{fotosDepois.length} foto(s) capturada(s)</p>}
+          </Card>
 
-      <Card className="p-4 space-y-3">
-        <h2 className="font-semibold text-sm">Observações</h2>
-        <textarea value={obs} onChange={e => setObs(e.target.value)} rows={3} maxLength={1000}
-          className="w-full rounded-lg border border-input bg-background p-3 text-sm" placeholder="Comentários sobre a execução..." />
-      </Card>
+          <Card className="p-4 space-y-3">
+            <h2 className="font-semibold text-sm">Observações</h2>
+            <textarea value={obs} onChange={e => setObs(e.target.value)} rows={3} maxLength={1000}
+              className="w-full rounded-lg border border-input bg-background p-3 text-sm" placeholder="Comentários sobre a execução..." />
+          </Card>
+        </>
+      ) : (
+        <Card className="p-5 text-sm text-muted-foreground">
+          Esta loja não exige execução de fotos/checklist. Ao finalizar, seu ponto será encerrado.
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <Button asChild variant="outline" size="lg"><Link to="/app/ruptura-validade">Ruptura/Validade</Link></Button>
