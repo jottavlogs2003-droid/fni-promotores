@@ -460,17 +460,8 @@ export default function AdminApp() {
               { key: "requer_execucao", label: "Exige execução (fotos/checklist)?", type: "boolean", options: [{ value: "true", label: "Sim" }, { value: "false", label: "Não — apenas ponto" }] },
             ]} />
         } />
-        <Route path="produtos" element={
-          <CrudList title="Produtos" table="produtos" parentField="cliente_id"
-            columns={[{ key: "nome", label: "Nome" }, { key: "sku", label: "SKU" }, { key: "marca", label: "Marca" }, { key: "cliente", label: "Cliente" }]}
-            formFields={[
-              { key: "cliente_id", label: "Cliente", required: true },
-              { key: "nome", label: "Nome", required: true },
-              { key: "sku", label: "SKU" },
-              { key: "marca", label: "Marca" },
-              { key: "categoria", label: "Categoria" },
-            ]} />
-        } />
+        <Route path="produtos" element={<Navigate to="/app/validades" replace />} />
+        <Route path="validades" element={<ValidadesView />} />
         <Route path="campanhas" element={
           <CrudList title="Campanhas" table="campanhas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "data_inicio", label: "Início" }, { key: "data_fim", label: "Fim" }, { key: "status", label: "Status" }]}
@@ -485,11 +476,11 @@ export default function AdminApp() {
         } />
         <Route path="monitoramento" element={<MonitoramentoPage />} />
         <Route path="mapa" element={<MapaAoVivo />} />
+        <Route path="config" element={<ConfigAdmin />} />
         <Route path="auditoria" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="relatorios" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="pagamentos" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="faturas" element={<Navigate to="/app/financeiro" replace />} />
-        <Route path="*" element={<Navigate to="/app" replace />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </DesktopLayout>
