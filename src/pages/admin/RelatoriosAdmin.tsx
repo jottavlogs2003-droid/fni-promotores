@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,33 @@ export default function RelatoriosAdmin() {
   const [busy, setBusy] = useState(false);
   const [previa, setPrevia] = useState<any[]>([]);
 
+  // Filtros
+  const [filtroLoja, setFiltroLoja] = useState<string>("");
+  const [filtroPromotor, setFiltroPromotor] = useState<string>("");
+  const [filtroCliente, setFiltroCliente] = useState<string>("");
+  const [lojas, setLojas] = useState<any[]>([]);
+  const [promotores, setPromotores] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: ls }, { data: ps }, { data: cs }] = await Promise.all([
+        supabase.from("lojas").select("id, nome, cliente_id").eq("ativo", true).order("nome"),
+        supabase.from("profiles").select("id, nome").order("nome"),
+        supabase.from("clientes").select("id, nome").eq("ativo", true).order("nome"),
+      ]);
+      setLojas(ls ?? []); setPromotores(ps ?? []); setClientes(cs ?? []);
+    })();
+  }, []);
+
   async function carregarDados() {
-    const { data: escalas } = await supabase.from("escalas")
-      .select("*, profiles!escalas_promotor_id_fkey(nome, valor_diaria), lojas(nome, cidade, cliente_id, clientes(nome, valor_diaria_cobrada))")
-      .gte("data", inicio).lte("data", fim).order("data");
+    let q = supabase.from("escalas")
+      .select("*, profiles!escalas_promotor_id_fkey(nome, valor_diaria), lojas!inner(nome, cidade, cliente_id, clientes(nome, valor_diaria_cobrada))")
+      .gte("data", inicio).lte("data", fim);
+    if (filtroLoja) q = q.eq("loja_id", filtroLoja);
+    if (filtroPromotor) q = q.eq("promotor_id", filtroPromotor);
+    if (filtroCliente) q = q.eq("lojas.cliente_id", filtroCliente);
+    const { data: escalas } = await q.order("data");
     return escalas ?? [];
   }
 
