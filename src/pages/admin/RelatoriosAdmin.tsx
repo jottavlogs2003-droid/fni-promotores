@@ -148,6 +148,30 @@ export default function RelatoriosAdmin() {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <Label>Filtrar por cliente</Label>
+            <select value={filtroCliente} onChange={e => setFiltroCliente(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+              <option value="">Todos os clientes</option>
+              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label>Filtrar por loja</Label>
+            <select value={filtroLoja} onChange={e => setFiltroLoja(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+              <option value="">Todas as lojas</option>
+              {lojas.filter(l => !filtroCliente || l.cliente_id === filtroCliente).map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label>Filtrar por promotor</Label>
+            <select value={filtroPromotor} onChange={e => setFiltroPromotor(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+              <option value="">Todos os promotores</option>
+              {promotores.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+            </select>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 items-end">
           <div><Label>Início</Label><Input type="date" value={inicio} onChange={e => setInicio(e.target.value)} /></div>
           <div><Label>Fim</Label><Input type="date" value={fim} onChange={e => setFim(e.target.value)} /></div>
