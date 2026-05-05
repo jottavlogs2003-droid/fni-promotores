@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SplashIntro } from "@/components/SplashIntro";
+import { OnboardingTour } from "@/components/OnboardingTour";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
@@ -16,7 +18,9 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <SplashIntro />
       <BrowserRouter>
+        <OnboardingTour />
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />

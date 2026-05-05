@@ -8,15 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText, Receipt, Loader2 } from "lucide-react";
+import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText, Receipt, Loader2, Package } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import ValidadesView from "./admin/ValidadesView";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
   { to: "/app/lojas", label: "Lojas", icon: Store },
   { to: "/app/execucoes", label: "Execuções", icon: Camera },
-  { to: "/app/rupturas", label: "Rupturas", icon: AlertTriangle },
+  { to: "/app/validades", label: "Validades", icon: Package },
   { to: "/app/faturas", label: "Faturas", icon: Receipt },
   { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
@@ -302,13 +303,15 @@ function RelatoriosContratante() {
 }
 
 export default function ContratanteApp() {
+  const { profile } = useAuth();
   return (
     <DesktopLayout items={items} title="Contratante">
       <Routes>
         <Route index element={<ContratanteDashboard />} />
         <Route path="lojas" element={<GenericTable title="Suas lojas" table="lojas" columns={[{ key: "nome", label: "Nome" }, { key: "cidade", label: "Cidade" }, { key: "estado", label: "UF" }]} />} />
         <Route path="execucoes" element={<GenericTable title="Execuções" table="execucoes" columns={[{ key: "loja", label: "Loja" }, { key: "score", label: "Score" }, { key: "observacoes", label: "Observações" }, { key: "created_at", label: "Quando" }]} />} />
-        <Route path="rupturas" element={<GenericTable title="Rupturas" table="rupturas" columns={[{ key: "produto", label: "Produto" }, { key: "loja", label: "Loja" }, { key: "quantidade_atual", label: "Qtd" }, { key: "status", label: "Status" }, { key: "created_at", label: "Quando" }]} />} />
+        <Route path="rupturas" element={<Navigate to="/app/validades" replace />} />
+        <Route path="validades" element={<ValidadesView clienteId={profile?.cliente_id} />} />
         <Route path="faturas" element={<MinhasFaturas />} />
         <Route path="relatorios" element={<RelatoriosContratante />} />
         <Route path="*" element={<Navigate to="/app" replace />} />

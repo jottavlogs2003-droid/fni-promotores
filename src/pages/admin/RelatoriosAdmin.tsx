@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,33 @@ export default function RelatoriosAdmin() {
   const [busy, setBusy] = useState(false);
   const [previa, setPrevia] = useState<any[]>([]);
 
+  // Filtros
+  const [filtroLoja, setFiltroLoja] = useState<string>("");
+  const [filtroPromotor, setFiltroPromotor] = useState<string>("");
+  const [filtroCliente, setFiltroCliente] = useState<string>("");
+  const [lojas, setLojas] = useState<any[]>([]);
+  const [promotores, setPromotores] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: ls }, { data: ps }, { data: cs }] = await Promise.all([
+        supabase.from("lojas").select("id, nome, cliente_id").eq("ativo", true).order("nome"),
+        supabase.from("profiles").select("id, nome").order("nome"),
+        supabase.from("clientes").select("id, nome").eq("ativo", true).order("nome"),
+      ]);
+      setLojas(ls ?? []); setPromotores(ps ?? []); setClientes(cs ?? []);
+    })();
+  }, []);
+
   async function carregarDados() {
-    const { data: escalas } = await supabase.from("escalas")
-      .select("*, profiles!escalas_promotor_id_fkey(nome, valor_diaria), lojas(nome, cidade, cliente_id, clientes(nome, valor_diaria_cobrada))")
-      .gte("data", inicio).lte("data", fim).order("data");
+    let q = supabase.from("escalas")
+      .select("*, profiles!escalas_promotor_id_fkey(nome, valor_diaria), lojas!inner(nome, cidade, cliente_id, clientes(nome, valor_diaria_cobrada))")
+      .gte("data", inicio).lte("data", fim);
+    if (filtroLoja) q = q.eq("loja_id", filtroLoja);
+    if (filtroPromotor) q = q.eq("promotor_id", filtroPromotor);
+    if (filtroCliente) q = q.eq("lojas.cliente_id", filtroCliente);
+    const { data: escalas } = await q.order("data");
     return escalas ?? [];
   }
 
@@ -122,6 +145,30 @@ export default function RelatoriosAdmin() {
                 <p className="text-xs text-muted-foreground mt-1">{o.d}</p>
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <Label>Filtrar por cliente</Label>
+            <select value={filtroCliente} onChange={e => setFiltroCliente(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+              <option value="">Todos os clientes</option>
+              {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label>Filtrar por loja</Label>
+            <select value={filtroLoja} onChange={e => setFiltroLoja(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+              <option value="">Todas as lojas</option>
+              {lojas.filter(l => !filtroCliente || l.cliente_id === filtroCliente).map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label>Filtrar por promotor</Label>
+            <select value={filtroPromotor} onChange={e => setFiltroPromotor(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+              <option value="">Todos os promotores</option>
+              {promotores.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+            </select>
           </div>
         </div>
 

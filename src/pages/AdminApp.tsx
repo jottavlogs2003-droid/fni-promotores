@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon, Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EscalaAdmin } from "./admin/FinanceiroAdmin";
 import GeradorEscala from "./admin/GeradorEscala";
 import MapaAoVivo from "./admin/MapaAoVivo";
 import FinanceiroHub from "./admin/FinanceiroHub";
+import ConfigAdmin from "./admin/ConfigAdmin";
+import ValidadesView from "./admin/ValidadesView";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -24,10 +26,11 @@ const items = [
   { to: "/app/promotores", label: "Promotores", icon: Users },
   { to: "/app/clientes", label: "Clientes", icon: Building2 },
   { to: "/app/lojas", label: "Lojas", icon: Store },
-  { to: "/app/produtos", label: "Produtos", icon: Package },
   { to: "/app/campanhas", label: "Campanhas", icon: Megaphone },
   { to: "/app/financeiro", label: "Financeiro", icon: DollarSign },
+  { to: "/app/validades", label: "Validades", icon: Package },
   { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
+  { to: "/app/config", label: "Configurações", icon: Settings },
 ];
 
 function AdminDashboard() {
@@ -458,17 +461,8 @@ export default function AdminApp() {
               { key: "requer_execucao", label: "Exige execução (fotos/checklist)?", type: "boolean", options: [{ value: "true", label: "Sim" }, { value: "false", label: "Não — apenas ponto" }] },
             ]} />
         } />
-        <Route path="produtos" element={
-          <CrudList title="Produtos" table="produtos" parentField="cliente_id"
-            columns={[{ key: "nome", label: "Nome" }, { key: "sku", label: "SKU" }, { key: "marca", label: "Marca" }, { key: "cliente", label: "Cliente" }]}
-            formFields={[
-              { key: "cliente_id", label: "Cliente", required: true },
-              { key: "nome", label: "Nome", required: true },
-              { key: "sku", label: "SKU" },
-              { key: "marca", label: "Marca" },
-              { key: "categoria", label: "Categoria" },
-            ]} />
-        } />
+        <Route path="produtos" element={<Navigate to="/app/validades" replace />} />
+        <Route path="validades" element={<ValidadesView />} />
         <Route path="campanhas" element={
           <CrudList title="Campanhas" table="campanhas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "data_inicio", label: "Início" }, { key: "data_fim", label: "Fim" }, { key: "status", label: "Status" }]}
@@ -483,11 +477,11 @@ export default function AdminApp() {
         } />
         <Route path="monitoramento" element={<MonitoramentoPage />} />
         <Route path="mapa" element={<MapaAoVivo />} />
+        <Route path="config" element={<ConfigAdmin />} />
         <Route path="auditoria" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="relatorios" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="pagamentos" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="faturas" element={<Navigate to="/app/financeiro" replace />} />
-        <Route path="*" element={<Navigate to="/app" replace />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </DesktopLayout>
