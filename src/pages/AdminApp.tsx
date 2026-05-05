@@ -16,6 +16,7 @@ import GeradorEscala from "./admin/GeradorEscala";
 import MapaAoVivo from "./admin/MapaAoVivo";
 import FinanceiroHub from "./admin/FinanceiroHub";
 import ConfigAdmin from "./admin/ConfigAdmin";
+import ValidadesView from "./admin/ValidadesView";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
