@@ -37,7 +37,7 @@ export function MobileAppLayout({ items, children }: { items: NavItem[]; childre
 
       {/* Bottom nav */}
       <nav className="fixed bottom-0 inset-x-0 bg-card border-t border-border z-40 safe-bottom shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.1)]">
-        <div className="grid grid-cols-4 max-w-2xl mx-auto">
+        <div className="grid max-w-2xl mx-auto" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
           {items.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} end className={({ isActive }) => cn(
               "flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition-base",
