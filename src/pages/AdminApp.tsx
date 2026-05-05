@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon, Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EscalaAdmin } from "./admin/FinanceiroAdmin";
 import GeradorEscala from "./admin/GeradorEscala";
 import MapaAoVivo from "./admin/MapaAoVivo";
 import FinanceiroHub from "./admin/FinanceiroHub";
+import ConfigAdmin from "./admin/ConfigAdmin";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -24,10 +25,11 @@ const items = [
   { to: "/app/promotores", label: "Promotores", icon: Users },
   { to: "/app/clientes", label: "Clientes", icon: Building2 },
   { to: "/app/lojas", label: "Lojas", icon: Store },
-  { to: "/app/produtos", label: "Produtos", icon: Package },
   { to: "/app/campanhas", label: "Campanhas", icon: Megaphone },
   { to: "/app/financeiro", label: "Financeiro", icon: DollarSign },
+  { to: "/app/validades", label: "Validades", icon: Package },
   { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
+  { to: "/app/config", label: "Configurações", icon: Settings },
 ];
 
 function AdminDashboard() {
