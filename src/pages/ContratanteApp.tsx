@@ -303,6 +303,7 @@ function RelatoriosContratante() {
 }
 
 export default function ContratanteApp() {
+  const { profile } = useAuth();
   return (
     <DesktopLayout items={items} title="Contratante">
       <Routes>
