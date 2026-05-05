@@ -151,3 +151,31 @@
 }
 .animate-fade-in-up { animation: fade-in-up 0.4s ease-out; }
 .animate-pulse-ring { animation: pulse-ring 2s infinite; }
+
+/* ============= Splash cinematográfico ============= */
+@keyframes splash-kenburns {
+  0%   { transform: scale(1.05) translate(0, 0); }
+  100% { transform: scale(1.18) translate(-1.5%, -1%); }
+}
+@keyframes splash-fade-up {
+  0%   { opacity: 0; transform: translateY(18px); letter-spacing: 0.18em; filter: blur(6px); }
+  100% { opacity: 1; transform: translateY(0);   letter-spacing: 0.02em; filter: blur(0); }
+}
+@keyframes splash-bar-in-top {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(0); }
+}
+@keyframes splash-bar-in-bottom {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+@keyframes splash-logo-in {
+  0% { opacity: 0; transform: scale(0.6); filter: blur(8px); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+.splash-kenburns { animation: splash-kenburns 3.2s ease-out forwards; }
+.splash-bar-top  { animation: splash-bar-in-top 0.7s cubic-bezier(.7,.0,.2,1) forwards; }
+.splash-bar-bottom { animation: splash-bar-in-bottom 0.7s cubic-bezier(.7,.0,.2,1) forwards; }
+.splash-logo  { animation: splash-logo-in 0.9s 0.4s ease-out both; }
+.splash-title { animation: splash-fade-up 1s 0.9s ease-out both; }
+.splash-tagline { animation: splash-fade-up 1s 1.4s ease-out both; }
