@@ -88,10 +88,16 @@ export default function GeradorEscala() {
         onlyProm = (profs ?? []).filter((p: any) => setIds.has(p.id));
       }
       setPromotores(onlyProm as Promotor[]);
+      setPromotoresSelecionados(new Set(onlyProm.map((p: any) => p.id)));
       setLojas((lj ?? []) as Loja[]);
       setClientes((cls ?? []) as any[]);
     })();
   }, []);
+
+  const promotoresAtivos = useMemo(
+    () => promotores.filter(p => promotoresSelecionados.has(p.id)),
+    [promotores, promotoresSelecionados]
+  );
 
   const lojasFiltradas = useMemo(
     () => (clienteId === "todos" ? lojas : lojas.filter(l => l.cliente_id === clienteId)),
