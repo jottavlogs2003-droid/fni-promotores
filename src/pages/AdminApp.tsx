@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon, Settings, UserCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EscalaAdmin } from "./admin/FinanceiroAdmin";
@@ -17,6 +17,8 @@ import MapaAoVivo from "./admin/MapaAoVivo";
 import FinanceiroHub from "./admin/FinanceiroHub";
 import ConfigAdmin from "./admin/ConfigAdmin";
 import ValidadesView from "./admin/ValidadesView";
+import ClientesAdmin from "./admin/ClientesAdmin";
+import RelatoriosPromotores from "./admin/RelatoriosPromotores";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
