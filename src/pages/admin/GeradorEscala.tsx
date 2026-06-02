@@ -127,8 +127,8 @@ export default function GeradorEscala() {
         toast.error("Nenhuma loja disponível para o cliente selecionado.");
         return;
       }
-      if (promotores.length === 0) {
-        toast.error("Nenhum promotor ativo encontrado.");
+      if (promotoresAtivos.length === 0) {
+        toast.error("Selecione pelo menos um promotor.");
         return;
       }
 
