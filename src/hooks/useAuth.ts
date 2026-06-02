@@ -63,6 +63,14 @@ export function useAuth() {
 }
 
 export async function signOut() {
-  await supabase.auth.signOut();
-  window.location.href = "/auth";
+  try {
+    // Limpa flags de tour/splash para não vazar entre contas
+    Object.keys(localStorage).filter(k => k.startsWith("fni_tour_done_")).forEach(k => localStorage.removeItem(k));
+    sessionStorage.removeItem("fni_splash_seen");
+    await supabase.auth.signOut();
+  } catch (e) {
+    console.error("signOut error", e);
+  } finally {
+    window.location.replace("/auth");
+  }
 }
