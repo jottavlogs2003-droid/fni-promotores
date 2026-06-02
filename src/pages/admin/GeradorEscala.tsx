@@ -55,6 +55,7 @@ export default function GeradorEscala() {
   const [incluirDomingo, setIncluirDomingo] = useState(false);
   const [aplicarDuplaDiaria, setAplicarDuplaDiaria] = useState(true);
   const [clienteId, setClienteId] = useState<string>("todos");
+  const [promotoresSelecionados, setPromotoresSelecionados] = useState<Set<string>>(new Set());
 
   const [promotores, setPromotores] = useState<Promotor[]>([]);
   const [lojas, setLojas] = useState<Loja[]>([]);
