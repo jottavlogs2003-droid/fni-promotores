@@ -62,33 +62,55 @@ export default function RelatoriosPromotores() {
   async function carregar() {
     setBusy(true);
     try {
-      // Usa check_ins (dados reais de presença com horários) + escalas como fallback
       let q = supabase.from("check_ins")
-        .select("*, lojas(nome, cidade, clientes(nome)), profiles!check_ins_promotor_id_fkey(nome, valor_diaria)")
+        .select("id, promotor_id, loja_id, hora_entrada, hora_saida")
         .gte("hora_entrada", intervalo.inicio + "T00:00:00")
         .lte("hora_entrada", intervalo.fim + "T23:59:59")
         .order("hora_entrada", { ascending: true });
       if (escopo === "individual" && promotorId) q = q.eq("promotor_id", promotorId);
-
-      const { data, error } = await q;
+      const { data: cis, error } = await q;
       if (error) throw error;
-      const rows = data ?? [];
-      setDados(rows);
+      const rows = cis ?? [];
 
-      const r: Record<string, any> = {};
-      rows.forEach(c => {
+      const promIds = Array.from(new Set(rows.map(r => r.promotor_id)));
+      const lojaIds = Array.from(new Set(rows.map(r => r.loja_id)));
+      const [profsRes, lojasRes] = await Promise.all([
+        promIds.length ? supabase.from("profiles").select("id, nome").in("id", promIds) : Promise.resolve({ data: [] as any[] } as any),
+        lojaIds.length ? supabase.from("lojas").select("id, nome, cidade, cliente_id").in("id", lojaIds) : Promise.resolve({ data: [] as any[] } as any),
+      ]);
+      const lojasData = (lojasRes.data ?? []) as any[];
+      const cliIds = Array.from(new Set(lojasData.map(l => l.cliente_id)));
+      const clisRes = cliIds.length
+        ? await supabase.from("clientes").select("id, nome").in("id", cliIds)
+        : { data: [] as any[] } as any;
+      const pMap = new Map(((profsRes.data ?? []) as any[]).map(p => [p.id, p]));
+      const lMap = new Map(lojasData.map(l => [l.id, l]));
+      const cMap = new Map(((clisRes.data ?? []) as any[]).map(c => [c.id, c]));
+
+      const enriched = rows.map(r => {
+        const loja: any = lMap.get(r.loja_id);
+        return {
+          ...r,
+          profiles: pMap.get(r.promotor_id) ?? null,
+          lojas: loja ? { ...loja, clientes: cMap.get(loja.cliente_id) ?? null } : null,
+        };
+      });
+      setDados(enriched);
+
+      const agg: Record<string, any> = {};
+      enriched.forEach((c: any) => {
         const pid = c.promotor_id;
         const nome = c.profiles?.nome ?? "—";
-        if (!r[pid]) r[pid] = { nome, turnos: 0, horas: 0, lojas: new Set<string>() };
-        r[pid].turnos += 1;
+        if (!agg[pid]) agg[pid] = { nome, turnos: 0, horas: 0, lojas: new Set<string>() };
+        agg[pid].turnos += 1;
         if (c.hora_saida) {
           const h = (new Date(c.hora_saida).getTime() - new Date(c.hora_entrada).getTime()) / 3_600_000;
-          r[pid].horas += Math.max(0, h);
+          agg[pid].horas += Math.max(0, h);
         }
-        if (c.lojas?.nome) r[pid].lojas.add(c.lojas.nome);
+        if (c.lojas?.nome) agg[pid].lojas.add(c.lojas.nome);
       });
-      setResumo(r);
-      if (rows.length === 0) toast.info("Nenhum check-in no período.");
+      setResumo(agg);
+      if (enriched.length === 0) toast.info("Nenhum check-in no período.");
     } catch (e: any) {
       toast.error(e.message);
     } finally {
