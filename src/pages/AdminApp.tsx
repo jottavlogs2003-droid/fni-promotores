@@ -26,6 +26,7 @@ const items = [
   { to: "/app/escala", label: "Escala", icon: Calendar },
   { to: "/app/escala-auto", label: "Gerar escala", icon: Wand2 },
   { to: "/app/promotores", label: "Promotores", icon: Users },
+  { to: "/app/rel-promotores", label: "Rel. Promotores", icon: UserCheck },
   { to: "/app/clientes", label: "Clientes", icon: Building2 },
   { to: "/app/lojas", label: "Lojas", icon: Store },
   { to: "/app/campanhas", label: "Campanhas", icon: Megaphone },
