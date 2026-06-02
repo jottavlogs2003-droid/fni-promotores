@@ -431,21 +431,8 @@ export default function AdminApp() {
       <Routes>
         <Route index element={<AdminDashboard />} />
         <Route path="promotores" element={<PromotoresAdmin />} />
-        <Route path="clientes" element={
-          <CrudList title="Clientes" table="clientes" columns={[{ key: "nome", label: "Nome" }, { key: "responsavel", label: "Responsável" }, { key: "tipo_cobranca", label: "Cobrança" }, { key: "valor_diaria_cobrada", label: "R$/diária" }]}
-            rowActions={(it, reload) => <CriarLoginContratanteDialog cliente={it} onDone={reload} />}
-            formFields={[
-              { key: "nome", label: "Nome da empresa", required: true },
-              { key: "responsavel", label: "Responsável" },
-              { key: "cnpj", label: "CNPJ" },
-              { key: "email_contato", label: "Email", type: "email" },
-              { key: "telefone", label: "Telefone" },
-              { key: "tipo_cobranca", label: "Tipo de cobrança", options: [{ value: "diaria", label: "Por diária" }, { value: "hora", label: "Por hora" }, { value: "mensal", label: "Mensal" }] },
-              { key: "valor_diaria_cobrada", label: "Valor por diária (R$)", type: "number" },
-              { key: "valor_hora_cobrada", label: "Valor por hora (R$)", type: "number" },
-              { key: "valor_mensal", label: "Valor mensal (R$)", type: "number" },
-            ]} />
-        } />
+        <Route path="clientes" element={<ClientesAdmin />} />
+        <Route path="rel-promotores" element={<RelatoriosPromotores />} />
         <Route path="financeiro" element={<FinanceiroHub />} />
         <Route path="escala" element={<EscalaAdmin />} />
         <Route path="escala-auto" element={<GeradorEscala />} />
