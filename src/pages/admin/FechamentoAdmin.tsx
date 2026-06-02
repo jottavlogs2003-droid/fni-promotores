@@ -13,13 +13,28 @@ import { useAuth } from "@/hooks/useAuth";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
+type Periodo = "semana" | "mes" | "ano";
+
+function semanaISO(d: Date): { ano: number; semana: number; ini: Date; fim: Date } {
+  const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dow = tmp.getUTCDay() || 7;
+  tmp.setUTCDate(tmp.getUTCDate() + 4 - dow);
+  const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+  const semana = Math.ceil((((tmp.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  const seg = new Date(d); seg.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  const dom = new Date(seg); dom.setDate(seg.getDate() + 6);
+  return { ano: tmp.getUTCFullYear(), semana, ini: seg, fim: dom };
+}
+
 export function FechamentoMensal() {
   const { user } = useAuth();
   const [fechamentos, setFechamentos] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [ano, setAno] = useState(new Date().getFullYear());
   const [mes, setMes] = useState(new Date().getMonth() + 1);
+  const [dataRef, setDataRef] = useState(() => new Date().toISOString().slice(0, 10));
 
   async function load() {
     const { data } = await (supabase as any).from("fechamentos_mensais")
@@ -30,31 +45,67 @@ export function FechamentoMensal() {
   }
   useEffect(() => { load(); }, []);
 
-  async function fecharMes(e: React.FormEvent<HTMLFormElement>) {
+  async function fechar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!user) return;
     setBusy(true);
     const fd = new FormData(e.currentTarget);
-    const { error } = await (supabase as any).from("fechamentos_mensais").insert({
-      ano, mes, fechado_por: user.id,
-      observacoes: fd.get("observacoes") || null,
-    });
+    let payload: any = { fechado_por: user.id };
+    let extra = String(fd.get("observacoes") || "");
+    let label = "";
+
+    if (periodo === "ano") {
+      // Fecha todos os 12 meses do ano (insere os que faltarem)
+      const ja = new Set(fechamentos.filter(f => f.ano === ano && !f.reaberto_em).map(f => f.mes));
+      const aFechar = Array.from({ length: 12 }, (_, i) => i + 1).filter(m => !ja.has(m));
+      if (aFechar.length === 0) { toast.info("Ano já totalmente fechado."); setBusy(false); setOpen(false); return; }
+      const rows = aFechar.map(m => ({ ano, mes: m, fechado_por: user.id, observacoes: `[ANUAL ${ano}] ${extra}`.trim() }));
+      const { error } = await (supabase as any).from("fechamentos_mensais").insert(rows);
+      setBusy(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success(`Ano ${ano} fechado (${aFechar.length} meses).`);
+      setOpen(false); load(); return;
+    }
+
+    if (periodo === "semana") {
+      const ref = new Date(dataRef + "T00:00:00");
+      const w = semanaISO(ref);
+      label = `[SEMANA ${w.semana}/${w.ano} ${w.ini.toLocaleDateString("pt-BR")}–${w.fim.toLocaleDateString("pt-BR")}]`;
+      payload.ano = w.ini.getFullYear();
+      payload.mes = w.ini.getMonth() + 1;
+    } else {
+      label = `[MÊS]`;
+      payload.ano = ano;
+      payload.mes = mes;
+    }
+    payload.observacoes = `${label} ${extra}`.trim();
+
+    const { error } = await (supabase as any).from("fechamentos_mensais").insert(payload);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success(`${MESES[mes-1]}/${ano} fechado!`);
-    setOpen(false);
-    load();
+    toast.success("Período fechado!");
+    setOpen(false); load();
   }
 
   async function reabrirMes(id: string) {
     if (!user) return;
-    if (!confirm("Tem certeza? Reabrir um mês permite alterações em pagamentos, faturas e escalas desse período.")) return;
+    if (!confirm("Tem certeza? Reabrir um período permite alterações em pagamentos, faturas e escalas.")) return;
     const { error } = await (supabase as any).from("fechamentos_mensais")
       .update({ reaberto_em: new Date().toISOString(), reaberto_por: user.id })
       .eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success("Mês reaberto");
+    toast.success("Período reaberto");
     load();
+  }
+
+  function rotuloFechamento(f: any) {
+    const obs = String(f.observacoes ?? "");
+    if (obs.startsWith("[SEMANA")) {
+      const m = obs.match(/\[SEMANA ([^\]]+)\]/);
+      return `🗓️ ${m?.[1] ?? `Semana ${MESES[f.mes-1]}/${f.ano}`}`;
+    }
+    if (obs.startsWith("[ANUAL")) return `📅 Anual ${f.ano} · ${MESES[f.mes-1]}`;
+    return `${MESES[f.mes-1]} / ${f.ano}`;
   }
 
   const fechados = fechamentos.filter(f => !f.reaberto_em);
@@ -64,30 +115,64 @@ export function FechamentoMensal() {
     <div className="space-y-5 animate-fade-in-up">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-display font-bold flex items-center gap-2"><Lock className="h-7 w-7" /> Fechamento mensal</h1>
-          <p className="text-muted-foreground text-sm">Trava pagamentos, faturas e escalas de meses já encerrados.</p>
+          <h1 className="text-3xl font-display font-bold flex items-center gap-2"><Lock className="h-7 w-7" /> Fechamento</h1>
+          <p className="text-muted-foreground text-sm">Trava pagamentos, faturas e escalas · semanal, mensal ou anual.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button variant="brand"><Lock className="h-4 w-4" /> Fechar mês</Button></DialogTrigger>
+          <DialogTrigger asChild><Button variant="brand"><Lock className="h-4 w-4" /> Novo fechamento</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Fechar mês</DialogTitle></DialogHeader>
-            <form onSubmit={fecharMes} className="space-y-4">
+            <DialogHeader><DialogTitle>Fechar período</DialogTitle></DialogHeader>
+            <form onSubmit={fechar} className="space-y-4">
               <div className="bg-warning/10 border border-warning/30 rounded-md p-3 text-sm flex gap-2">
                 <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
-                <span>Após fechar, <strong>nenhum</strong> pagamento, fatura ou escala desse mês poderá ser editado ou apagado, exceto se reaberto.</span>
+                <span>Após fechar, <strong>nenhum</strong> pagamento, fatura ou escala do período poderá ser editado, exceto se reaberto.</span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+
+              <div>
+                <Label className="mb-2 block">Tipo de período</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(["semana", "mes", "ano"] as Periodo[]).map(p => (
+                    <button key={p} type="button" onClick={() => setPeriodo(p)}
+                      className={`p-3 rounded-md border text-sm font-medium transition-base ${periodo === p ? "border-primary bg-primary/10 text-primary" : "border-input hover:bg-muted/40"}`}>
+                      {p === "semana" ? "Semanal" : p === "mes" ? "Mensal" : "Anual"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {periodo === "semana" && (
+                <div>
+                  <Label>Data dentro da semana</Label>
+                  <Input type="date" value={dataRef} onChange={e => setDataRef(e.target.value)} required />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {(() => { const w = semanaISO(new Date(dataRef + "T00:00:00")); return `Fecha semana ${w.semana}/${w.ano}: ${w.ini.toLocaleDateString("pt-BR")} – ${w.fim.toLocaleDateString("pt-BR")}`; })()}
+                  </p>
+                </div>
+              )}
+
+              {periodo === "mes" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Ano</Label>
+                    <Input type="number" value={ano} onChange={e => setAno(Number(e.target.value))} min={2020} max={2100} />
+                  </div>
+                  <div>
+                    <Label>Mês</Label>
+                    <select value={mes} onChange={e => setMes(Number(e.target.value))} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                      {MESES.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {periodo === "ano" && (
                 <div>
                   <Label>Ano</Label>
                   <Input type="number" value={ano} onChange={e => setAno(Number(e.target.value))} min={2020} max={2100} />
+                  <p className="text-xs text-muted-foreground mt-1">Fecha todos os meses de {ano} que ainda não estão fechados.</p>
                 </div>
-                <div>
-                  <Label>Mês</Label>
-                  <select value={mes} onChange={e => setMes(Number(e.target.value))} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                    {MESES.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
-                  </select>
-                </div>
-              </div>
+              )}
+
               <div>
                 <Label>Observações (opcional)</Label>
                 <Input name="observacoes" placeholder="Ex.: Validado com contabilidade" />
@@ -101,18 +186,17 @@ export function FechamentoMensal() {
       </div>
 
       <Card className="p-5">
-        <h2 className="font-display font-bold mb-3 flex items-center gap-2"><Lock className="h-4 w-4 text-success" /> Meses fechados ({fechados.length})</h2>
+        <h2 className="font-display font-bold mb-3 flex items-center gap-2"><Lock className="h-4 w-4 text-success" /> Períodos fechados ({fechados.length})</h2>
         {fechados.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum mês fechado ainda.</p>
+          <p className="text-sm text-muted-foreground">Nenhum período fechado ainda.</p>
         ) : (
           <div className="space-y-2">
             {fechados.map(f => (
               <div key={f.id} className="flex items-center justify-between border-b border-border pb-2 last:border-0">
                 <div>
-                  <p className="font-medium">{MESES[f.mes-1]} / {f.ano}</p>
+                  <p className="font-medium">{rotuloFechamento(f)}</p>
                   <p className="text-xs text-muted-foreground">
                     Fechado em {new Date(f.fechado_em).toLocaleString("pt-BR")}
-                    {f.observacoes && ` · ${f.observacoes}`}
                   </p>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => reabrirMes(f.id)}>
@@ -130,7 +214,7 @@ export function FechamentoMensal() {
           <div className="space-y-2">
             {reabertos.map(f => (
               <div key={f.id} className="text-sm border-b border-border pb-2 last:border-0">
-                <p className="font-medium">{MESES[f.mes-1]} / {f.ano}</p>
+                <p className="font-medium">{rotuloFechamento(f)}</p>
                 <p className="text-xs text-muted-foreground">
                   Fechado em {new Date(f.fechado_em).toLocaleString("pt-BR")} · Reaberto em {new Date(f.reaberto_em).toLocaleString("pt-BR")}
                 </p>
