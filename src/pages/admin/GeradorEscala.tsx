@@ -142,8 +142,8 @@ export default function GeradorEscala() {
         (existentes ?? []).map((e: any) => `${e.data}|${e.promotor_id}|${e.turno}`)
       );
 
-      const fixos = promotores.filter(p => p.tipo_promotor === "fixo" && p.loja_fixa_id);
-      const rotativos = promotores.filter(p => p.tipo_promotor !== "fixo");
+      const fixos = promotoresAtivos.filter(p => p.tipo_promotor === "fixo" && p.loja_fixa_id);
+      const rotativos = promotoresAtivos.filter(p => p.tipo_promotor !== "fixo");
 
       const itens: PreviewItem[] = [];
       const avisos: string[] = [];
