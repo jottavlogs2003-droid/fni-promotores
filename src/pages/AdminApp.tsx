@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon, Settings, UserCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EscalaAdmin } from "./admin/FinanceiroAdmin";
@@ -17,6 +17,8 @@ import MapaAoVivo from "./admin/MapaAoVivo";
 import FinanceiroHub from "./admin/FinanceiroHub";
 import ConfigAdmin from "./admin/ConfigAdmin";
 import ValidadesView from "./admin/ValidadesView";
+import ClientesAdmin from "./admin/ClientesAdmin";
+import RelatoriosPromotores from "./admin/RelatoriosPromotores";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -24,6 +26,7 @@ const items = [
   { to: "/app/escala", label: "Escala", icon: Calendar },
   { to: "/app/escala-auto", label: "Gerar escala", icon: Wand2 },
   { to: "/app/promotores", label: "Promotores", icon: Users },
+  { to: "/app/rel-promotores", label: "Rel. Promotores", icon: UserCheck },
   { to: "/app/clientes", label: "Clientes", icon: Building2 },
   { to: "/app/lojas", label: "Lojas", icon: Store },
   { to: "/app/campanhas", label: "Campanhas", icon: Megaphone },
@@ -428,21 +431,8 @@ export default function AdminApp() {
       <Routes>
         <Route index element={<AdminDashboard />} />
         <Route path="promotores" element={<PromotoresAdmin />} />
-        <Route path="clientes" element={
-          <CrudList title="Clientes" table="clientes" columns={[{ key: "nome", label: "Nome" }, { key: "responsavel", label: "Responsável" }, { key: "tipo_cobranca", label: "Cobrança" }, { key: "valor_diaria_cobrada", label: "R$/diária" }]}
-            rowActions={(it, reload) => <CriarLoginContratanteDialog cliente={it} onDone={reload} />}
-            formFields={[
-              { key: "nome", label: "Nome da empresa", required: true },
-              { key: "responsavel", label: "Responsável" },
-              { key: "cnpj", label: "CNPJ" },
-              { key: "email_contato", label: "Email", type: "email" },
-              { key: "telefone", label: "Telefone" },
-              { key: "tipo_cobranca", label: "Tipo de cobrança", options: [{ value: "diaria", label: "Por diária" }, { value: "hora", label: "Por hora" }, { value: "mensal", label: "Mensal" }] },
-              { key: "valor_diaria_cobrada", label: "Valor por diária (R$)", type: "number" },
-              { key: "valor_hora_cobrada", label: "Valor por hora (R$)", type: "number" },
-              { key: "valor_mensal", label: "Valor mensal (R$)", type: "number" },
-            ]} />
-        } />
+        <Route path="clientes" element={<ClientesAdmin />} />
+        <Route path="rel-promotores" element={<RelatoriosPromotores />} />
         <Route path="financeiro" element={<FinanceiroHub />} />
         <Route path="escala" element={<EscalaAdmin />} />
         <Route path="escala-auto" element={<GeradorEscala />} />

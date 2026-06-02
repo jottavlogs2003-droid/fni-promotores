@@ -55,6 +55,7 @@ export default function GeradorEscala() {
   const [incluirDomingo, setIncluirDomingo] = useState(false);
   const [aplicarDuplaDiaria, setAplicarDuplaDiaria] = useState(true);
   const [clienteId, setClienteId] = useState<string>("todos");
+  const [promotoresSelecionados, setPromotoresSelecionados] = useState<Set<string>>(new Set());
 
   const [promotores, setPromotores] = useState<Promotor[]>([]);
   const [lojas, setLojas] = useState<Loja[]>([]);
@@ -87,10 +88,16 @@ export default function GeradorEscala() {
         onlyProm = (profs ?? []).filter((p: any) => setIds.has(p.id));
       }
       setPromotores(onlyProm as Promotor[]);
+      setPromotoresSelecionados(new Set(onlyProm.map((p: any) => p.id)));
       setLojas((lj ?? []) as Loja[]);
       setClientes((cls ?? []) as any[]);
     })();
   }, []);
+
+  const promotoresAtivos = useMemo(
+    () => promotores.filter(p => promotoresSelecionados.has(p.id)),
+    [promotores, promotoresSelecionados]
+  );
 
   const lojasFiltradas = useMemo(
     () => (clienteId === "todos" ? lojas : lojas.filter(l => l.cliente_id === clienteId)),
@@ -120,8 +127,8 @@ export default function GeradorEscala() {
         toast.error("Nenhuma loja disponível para o cliente selecionado.");
         return;
       }
-      if (promotores.length === 0) {
-        toast.error("Nenhum promotor ativo encontrado.");
+      if (promotoresAtivos.length === 0) {
+        toast.error("Selecione pelo menos um promotor.");
         return;
       }
 
@@ -135,8 +142,8 @@ export default function GeradorEscala() {
         (existentes ?? []).map((e: any) => `${e.data}|${e.promotor_id}|${e.turno}`)
       );
 
-      const fixos = promotores.filter(p => p.tipo_promotor === "fixo" && p.loja_fixa_id);
-      const rotativos = promotores.filter(p => p.tipo_promotor !== "fixo");
+      const fixos = promotoresAtivos.filter(p => p.tipo_promotor === "fixo" && p.loja_fixa_id);
+      const rotativos = promotoresAtivos.filter(p => p.tipo_promotor !== "fixo");
 
       const itens: PreviewItem[] = [];
       const avisos: string[] = [];
@@ -299,6 +306,32 @@ export default function GeradorEscala() {
           </div>
         </div>
 
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Label>Promotores ({promotoresAtivos.length} de {promotores.length})</Label>
+            <div className="flex gap-2 text-xs">
+              <button type="button" onClick={() => setPromotoresSelecionados(new Set(promotores.map(p => p.id)))} className="text-primary hover:underline">Todos</button>
+              <button type="button" onClick={() => setPromotoresSelecionados(new Set())} className="text-muted-foreground hover:underline">Nenhum</button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-2 border border-border rounded-md">
+            {promotores.map(p => {
+              const checked = promotoresSelecionados.has(p.id);
+              return (
+                <label key={p.id} className={`flex items-center gap-2 text-sm p-2 rounded cursor-pointer transition-base ${checked ? "bg-primary/10" : "hover:bg-muted/40"}`}>
+                  <Checkbox checked={checked} onCheckedChange={v => {
+                    const next = new Set(promotoresSelecionados);
+                    if (v) next.add(p.id); else next.delete(p.id);
+                    setPromotoresSelecionados(next);
+                  }} />
+                  <span className="truncate">{p.nome}</span>
+                </label>
+              );
+            })}
+            {promotores.length === 0 && <p className="text-xs text-muted-foreground col-span-full text-center py-4">Nenhum promotor ativo encontrado.</p>}
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-center gap-3 pt-2">
           <Button onClick={gerarPreview} disabled={loading} variant="brand">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -310,7 +343,7 @@ export default function GeradorEscala() {
           </Button>
           <div className="text-sm text-muted-foreground flex items-center gap-2">
             <CalendarRange className="h-4 w-4" />
-            {diasSelecionados().length} dias · {promotores.length} promotores · {lojasFiltradas.length} lojas
+            {diasSelecionados().length} dias · {promotoresAtivos.length} promotores · {lojasFiltradas.length} lojas
           </div>
         </div>
       </Card>
