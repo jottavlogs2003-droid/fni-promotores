@@ -19,6 +19,8 @@ import ConfigAdmin from "./admin/ConfigAdmin";
 import ValidadesView from "./admin/ValidadesView";
 import ClientesAdmin from "./admin/ClientesAdmin";
 import RelatoriosPromotores from "./admin/RelatoriosPromotores";
+import LojasAdmin from "./admin/LojasAdmin";
+import { MonitoramentoPanel } from "@/components/MonitoramentoPanel";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -310,8 +312,13 @@ function PromotoresAdmin() {
   const [busy, setBusy] = useState(false);
 
   async function load() {
-    const { data } = await supabase.from("profiles").select("*, user_roles(role)").order("created_at", { ascending: false });
-    setProfiles(data ?? []);
+    const [{ data: profs }, { data: rolesData }] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("user_id, role"),
+    ]);
+    const byUser = new Map<string, string>();
+    (rolesData ?? []).forEach((r: any) => byUser.set(r.user_id, r.role));
+    setProfiles((profs ?? []).map((p: any) => ({ ...p, role: byUser.get(p.id) ?? null })));
   }
   useEffect(() => { load(); }, []);
 
@@ -365,7 +372,7 @@ function PromotoresAdmin() {
                   <td className="p-3 text-xs">{p.tipo_promotor ?? "—"} · {p.jornada_horas ?? "—"}h</td>
                   <td className="p-3 text-right">{p.valor_diaria ? Number(p.valor_diaria).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}</td>
                   <td className="p-3 text-xs">{p.forma_pagamento ?? "—"}</td>
-                  <td className="p-3"><Badge>{p.user_roles?.[0]?.role ?? "—"}</Badge></td>
+                  <td className="p-3"><Badge>{p.role ?? "—"}</Badge></td>
                   <td className="p-3 flex flex-wrap gap-1">
                     <Button size="sm" variant="outline" onClick={() => setEditing(p)}>Editar dados</Button>
                     <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "admin")}>A</Button>
@@ -436,21 +443,7 @@ export default function AdminApp() {
         <Route path="financeiro" element={<FinanceiroHub />} />
         <Route path="escala" element={<EscalaAdmin />} />
         <Route path="escala-auto" element={<GeradorEscala />} />
-        <Route path="lojas" element={
-          <CrudList title="Lojas" table="lojas" parentField="cliente_id"
-            columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "cidade", label: "Cidade" }, { key: "raio_metros", label: "Raio (m)" }, { key: "requer_execucao", label: "Execução" }]}
-            formFields={[
-              { key: "cliente_id", label: "Cliente", required: true },
-              { key: "nome", label: "Nome", required: true },
-              { key: "endereco", label: "Endereço" },
-              { key: "cidade", label: "Cidade" },
-              { key: "estado", label: "Estado" },
-              { key: "latitude", label: "Latitude", type: "number" },
-              { key: "longitude", label: "Longitude", type: "number" },
-              { key: "raio_metros", label: "Raio em metros", type: "number" },
-              { key: "requer_execucao", label: "Exige execução (fotos/checklist)?", type: "boolean", options: [{ value: "true", label: "Sim" }, { value: "false", label: "Não — apenas ponto" }] },
-            ]} />
-        } />
+        <Route path="lojas" element={<LojasAdmin />} />
         <Route path="produtos" element={<Navigate to="/app/validades" replace />} />
         <Route path="validades" element={<ValidadesView />} />
         <Route path="campanhas" element={
@@ -465,7 +458,7 @@ export default function AdminApp() {
               { key: "status", label: "Status", options: [{ value: "rascunho", label: "Rascunho" }, { value: "ativa", label: "Ativa" }, { value: "pausada", label: "Pausada" }, { value: "concluida", label: "Concluída" }] },
             ]} />
         } />
-        <Route path="monitoramento" element={<MonitoramentoPage />} />
+        <Route path="monitoramento" element={<MonitoramentoPanel />} />
         <Route path="mapa" element={<MapaAoVivo />} />
         <Route path="config" element={<ConfigAdmin />} />
         <Route path="auditoria" element={<Navigate to="/app/financeiro" replace />} />
