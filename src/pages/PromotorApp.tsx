@@ -151,13 +151,15 @@ function CheckInPage() {
       setError("Preencha todos os campos: loja, GPS e selfie."); return;
     }
     const loja = lojas.find(l => l.id === selectedLoja);
-    let dist: number | null = null;
-    if (loja?.latitude && loja?.longitude) {
-      dist = distMeters(position.coords.latitude, position.coords.longitude, loja.latitude, loja.longitude);
-      if (dist > (loja.raio_metros ?? 100)) {
-        setError(`Você está a ${dist}m da loja. Aproxime-se até ${loja.raio_metros ?? 100}m.`);
-        return;
-      }
+    if (!loja?.latitude || !loja?.longitude) {
+      setError("Esta loja ainda não tem coordenadas cadastradas. Avise o administrador.");
+      return;
+    }
+    const dist = distMeters(position.coords.latitude, position.coords.longitude, loja.latitude, loja.longitude);
+    const raio = loja.raio_metros ?? 100;
+    if (dist > raio) {
+      setError(`Você está a ${dist}m da loja. Aproxime-se até ${raio}m para bater o ponto.`);
+      return;
     }
     setBusy(true);
     const { enqueueCheckIn, fileToDataUrl } = await import("@/lib/offlineQueue");

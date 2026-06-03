@@ -8,14 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText, Receipt, Loader2, Package } from "lucide-react";
+import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText, Receipt, Loader2, Package, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import ValidadesView from "./admin/ValidadesView";
+import { MonitoramentoPanel } from "@/components/MonitoramentoPanel";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
   { to: "/app/lojas", label: "Lojas", icon: Store },
+  { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
   { to: "/app/execucoes", label: "Execuções", icon: Camera },
   { to: "/app/validades", label: "Validades", icon: Package },
   { to: "/app/faturas", label: "Faturas", icon: Receipt },
@@ -314,6 +316,7 @@ export default function ContratanteApp() {
         <Route path="validades" element={<ValidadesView clienteId={profile?.cliente_id} />} />
         <Route path="faturas" element={<MinhasFaturas />} />
         <Route path="relatorios" element={<RelatoriosContratante />} />
+        <Route path="monitoramento" element={<MonitoramentoPanel clienteId={profile?.cliente_id ?? null} />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
       </Routes>
     </DesktopLayout>

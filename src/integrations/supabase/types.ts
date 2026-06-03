@@ -548,6 +548,7 @@ export type Database = {
           id: string
           latitude: number | null
           longitude: number | null
+          maps_link: string | null
           nome: string
           raio_metros: number
           requer_execucao: boolean
@@ -565,6 +566,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          maps_link?: string | null
           nome: string
           raio_metros?: number
           requer_execucao?: boolean
@@ -582,6 +584,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          maps_link?: string | null
           nome?: string
           raio_metros?: number
           requer_execucao?: boolean
