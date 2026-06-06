@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 import { LiveCamera } from "@/components/LiveCamera";
 import ProdutosPromotor from "./promotor/ProdutosPromotor";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 const items = [
   { to: "/app", label: "Início", icon: Home },
@@ -26,26 +27,26 @@ function PromotorHome() {
   const [campanhas, setCampanhas] = useState<any[]>([]);
   const [ultimoCheckIn, setUltimoCheckIn] = useState<any>(null);
 
-  useEffect(() => {
+  async function load() {
     if (!user) return;
-    (async () => {
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const [{ data: checkIns }, { data: camps }, { data: rupt }, { data: vals }] = await Promise.all([
-        supabase.from("check_ins").select("*, lojas(nome)").eq("promotor_id", user.id).gte("hora_entrada", today.toISOString()).order("hora_entrada", { ascending: false }),
-        supabase.from("campanhas").select("*, clientes(nome)").eq("status", "ativa").order("data_inicio", { ascending: false }),
-        supabase.from("rupturas").select("id").eq("promotor_id", user.id).eq("status", "aberta"),
-        supabase.from("validades").select("id").eq("promotor_id", user.id),
-      ]);
-      setStats({
-        checkInsHoje: checkIns?.length ?? 0,
-        lojasAtivas: new Set(checkIns?.map(c => c.loja_id) ?? []).size,
-        rupturas: rupt?.length ?? 0,
-        validades: vals?.length ?? 0,
-      });
-      setCampanhas(camps ?? []);
-      setUltimoCheckIn(checkIns?.[0] ?? null);
-    })();
-  }, [user]);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const [{ data: checkIns }, { data: camps }, { data: rupt }, { data: vals }] = await Promise.all([
+      supabase.from("check_ins").select("*, lojas(nome)").eq("promotor_id", user.id).gte("hora_entrada", today.toISOString()).order("hora_entrada", { ascending: false }),
+      supabase.from("campanhas").select("*, clientes(nome)").eq("status", "ativa").order("data_inicio", { ascending: false }),
+      supabase.from("rupturas").select("id").eq("promotor_id", user.id).eq("status", "aberta"),
+      supabase.from("validades").select("id").eq("promotor_id", user.id),
+    ]);
+    setStats({
+      checkInsHoje: checkIns?.length ?? 0,
+      lojasAtivas: new Set(checkIns?.map(c => c.loja_id) ?? []).size,
+      rupturas: rupt?.length ?? 0,
+      validades: vals?.length ?? 0,
+    });
+    setCampanhas(camps ?? []);
+    setUltimoCheckIn(checkIns?.[0] ?? null);
+  }
+
+  useRealtimeRefresh(["check_ins", "campanhas", "rupturas", "validades"], load, [user?.id], 10000);
 
   return (
     <div className="space-y-5 animate-fade-in-up">
@@ -123,10 +124,11 @@ function CheckInPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>("");
 
-  useEffect(() => {
+  useRealtimeRefresh(["lojas"], async () => {
     if (!user) return;
-    supabase.from("lojas").select("*").eq("ativo", true).then(({ data }) => setLojas(data ?? []));
-  }, [user]);
+    const { data } = await supabase.from("lojas").select("*").eq("ativo", true);
+    setLojas(data ?? []);
+  }, [user?.id], 15000);
 
   function getLocation() {
     setError("");
@@ -251,11 +253,11 @@ function ExecucaoPage() {
   const [fotosDepois, setFotosDepois] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
+  useRealtimeRefresh(["check_ins", "lojas"], async () => {
     if (!user) return;
-    supabase.from("check_ins").select("*, lojas(nome, cliente_id, requer_execucao)").eq("promotor_id", user.id).is("hora_saida", null).order("hora_entrada", { ascending: false }).limit(1).maybeSingle()
-      .then(({ data }) => setOpenCheckIn(data));
-  }, [user]);
+    const { data } = await supabase.from("check_ins").select("*, lojas(nome, cliente_id, requer_execucao)").eq("promotor_id", user.id).is("hora_saida", null).order("hora_entrada", { ascending: false }).limit(1).maybeSingle();
+    setOpenCheckIn(data);
+  }, [user?.id], 10000);
 
   async function uploadFotos(files: File[], tipo: "antes" | "depois", checkInId: string, lojaId: string) {
     for (const f of files) {
@@ -383,12 +385,15 @@ function RupturaValidadePage() {
   const [obs, setObs] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
+  useRealtimeRefresh(["check_ins", "produtos"], async () => {
     if (!user) return;
-    supabase.from("check_ins").select("*").eq("promotor_id", user.id).is("hora_saida", null).order("hora_entrada", { ascending: false }).limit(1).maybeSingle()
-      .then(({ data }) => setOpenCheckIn(data));
-    supabase.from("produtos").select("*").eq("ativo", true).then(({ data }) => setProdutos(data ?? []));
-  }, [user]);
+    const [{ data: checkin }, { data: prods }] = await Promise.all([
+      supabase.from("check_ins").select("*").eq("promotor_id", user.id).is("hora_saida", null).order("hora_entrada", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("produtos").select("*").eq("ativo", true),
+    ]);
+    setOpenCheckIn(checkin);
+    setProdutos(prods ?? []);
+  }, [user?.id], 10000);
 
   async function handleSave() {
     if (!user || !openCheckIn || !produtoId) return;
@@ -454,11 +459,11 @@ function HistoricoPage() {
   const { user } = useAuth();
   const [checkIns, setCheckIns] = useState<any[]>([]);
 
-  useEffect(() => {
+  useRealtimeRefresh(["check_ins", "lojas"], async () => {
     if (!user) return;
-    supabase.from("check_ins").select("*, lojas(nome, cidade)").eq("promotor_id", user.id).order("hora_entrada", { ascending: false }).limit(50)
-      .then(({ data }) => setCheckIns(data ?? []));
-  }, [user]);
+    const { data } = await supabase.from("check_ins").select("*, lojas(nome, cidade)").eq("promotor_id", user.id).order("hora_entrada", { ascending: false }).limit(50);
+    setCheckIns(data ?? []);
+  }, [user?.id], 10000);
 
   return (
     <div className="space-y-4 animate-fade-in-up">
@@ -486,10 +491,11 @@ function HistoricoPage() {
 function AgendaPage() {
   const { user } = useAuth();
   const [escalas, setEscalas] = useState<any[]>([]);
-  useEffect(() => {
+  useRealtimeRefresh(["escalas", "lojas"], async () => {
     if (!user) return;
-    supabase.from("escalas").select("*, lojas(nome, cidade, endereco)").eq("promotor_id", user.id).gte("data", new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10)).order("data").then(({ data }) => setEscalas(data ?? []));
-  }, [user]);
+    const { data } = await supabase.from("escalas").select("*, lojas(nome, cidade, endereco)").eq("promotor_id", user.id).gte("data", new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10)).order("data");
+    setEscalas(data ?? []);
+  }, [user?.id], 15000);
   const hoje = new Date().toISOString().slice(0, 10);
   return (
     <div className="space-y-4 animate-fade-in-up">
@@ -523,10 +529,11 @@ function AgendaPage() {
 function MeusPagamentos() {
   const { user } = useAuth();
   const [pags, setPags] = useState<any[]>([]);
-  useEffect(() => {
+  useRealtimeRefresh(["pagamentos_promotores"], async () => {
     if (!user) return;
-    supabase.from("pagamentos_promotores").select("*").eq("promotor_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setPags(data ?? []));
-  }, [user]);
+    const { data } = await supabase.from("pagamentos_promotores").select("*").eq("promotor_id", user.id).order("created_at", { ascending: false });
+    setPags(data ?? []);
+  }, [user?.id], 15000);
   const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const total = pags.reduce((s, p) => s + Number(p.valor_total || 0), 0);
   const pendente = pags.filter(p => p.status === "pendente").reduce((s, p) => s + Number(p.valor_total || 0), 0);

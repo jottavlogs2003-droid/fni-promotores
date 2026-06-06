@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { MapPin, Users, Clock } from "lucide-react";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 // fix marker icon paths (Leaflet padrão quebra com bundlers)
 const iconAtivo = L.divIcon({
@@ -57,15 +58,7 @@ export default function MapaAoVivo() {
     setLoading(false);
   }
 
-  useEffect(() => {
-    carregar();
-    const ch = supabase
-      .channel(`mapa-ativos-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "check_ins" }, () => carregar())
-      .subscribe();
-    const id = setInterval(carregar, 30_000);
-    return () => { supabase.removeChannel(ch); clearInterval(id); };
-  }, []);
+  useRealtimeRefresh(["check_ins", "lojas", "profiles"], carregar, [], 10000);
 
   const center = useMemo<[number, number]>(() => {
     if (ativos.length === 0) return [-23.55, -46.63]; // SP fallback

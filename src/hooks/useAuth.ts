@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { ReactNode, useSyncExternalStore } from "react";
+import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "admin" | "contratante" | "promotor";
@@ -14,62 +14,146 @@ export interface Profile {
   ativo: boolean;
 }
 
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [roles, setRoles] = useState<AppRole[]>([]);
-  const [loading, setLoading] = useState(true);
+type AuthState = {
+  user: User | null;
+  session: Session | null;
+  profile: Profile | null;
+  roles: AppRole[];
+  loading: boolean;
+  ready: boolean;
+};
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
-      setSession(sess);
-      setUser(sess?.user ?? null);
-      if (sess?.user) {
-        setTimeout(() => loadUserData(sess.user.id), 0);
-      } else {
-        setProfile(null);
-        setRoles([]);
-        setLoading(false);
-      }
-    });
+let state: AuthState = {
+  user: null,
+  session: null,
+  profile: null,
+  roles: [],
+  loading: true,
+  ready: false,
+};
 
-    supabase.auth.getSession().then(({ data: { session: sess } }) => {
-      setSession(sess);
-      setUser(sess?.user ?? null);
-      if (sess?.user) loadUserData(sess.user.id);
-      else setLoading(false);
-    });
+const listeners = new Set<() => void>();
+let initialized = false;
+let activeLoadToken = 0;
 
-    return () => subscription.unsubscribe();
-  }, []);
+function emit() {
+  listeners.forEach((listener) => listener());
+}
 
-  async function loadUserData(userId: string) {
-    const [{ data: prof }, { data: rolesData }] = await Promise.all([
+function setState(next: Partial<AuthState>) {
+  state = { ...state, ...next };
+  emit();
+}
+
+async function loadUserData(userId: string) {
+  const token = ++activeLoadToken;
+  setState({ loading: true, ready: true });
+
+  try {
+    const [{ data: prof, error: profError }, { data: rolesData, error: rolesError }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
-    setProfile(prof as Profile | null);
-    setRoles((rolesData?.map(r => r.role) ?? []) as AppRole[]);
-    setLoading(false);
+
+    if (token !== activeLoadToken || state.user?.id !== userId) return;
+    if (profError) console.error("profile load error", profError);
+    if (rolesError) console.error("roles load error", rolesError);
+
+    setState({
+      profile: (prof as Profile | null) ?? null,
+      roles: ((rolesData?.map((item) => item.role) ?? []) as AppRole[]),
+      loading: false,
+      ready: true,
+    });
+  } catch (error) {
+    if (token !== activeLoadToken || state.user?.id !== userId) return;
+    console.error("auth user data error", error);
+    setState({ profile: null, roles: [], loading: false, ready: true });
   }
+}
+
+function clearAuthState() {
+  activeLoadToken += 1;
+  setState({
+    user: null,
+    session: null,
+    profile: null,
+    roles: [],
+    loading: false,
+    ready: true,
+  });
+}
+
+function initAuth() {
+  if (initialized) return;
+  initialized = true;
+
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    setState({ user: session?.user ?? null, session, ready: true });
+    if (session?.user) {
+      void loadUserData(session.user.id);
+    } else {
+      setState({ loading: false, ready: true, profile: null, roles: [] });
+    }
+  }).catch((error) => {
+    console.error("auth session restore error", error);
+    clearAuthState();
+  });
+
+  supabase.auth.onAuthStateChange((_event, session) => {
+    setState({ user: session?.user ?? null, session, ready: true });
+
+    if (session?.user) {
+      queueMicrotask(() => {
+        void loadUserData(session.user.id);
+      });
+      return;
+    }
+
+    clearAuthState();
+  });
+}
+
+function subscribe(listener: () => void) {
+  initAuth();
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function getSnapshot() {
+  initAuth();
+  return state;
+}
+
+export function useAuth() {
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   const primaryRole: AppRole | null =
-    roles.includes("admin") ? "admin" :
-    roles.includes("contratante") ? "contratante" :
-    roles.includes("promotor") ? "promotor" : null;
+    snapshot.roles.includes("admin") ? "admin" :
+    snapshot.roles.includes("contratante") ? "contratante" :
+    snapshot.roles.includes("promotor") ? "promotor" : null;
 
-  return { user, session, profile, roles, primaryRole, loading };
+  return {
+    ...snapshot,
+    primaryRole,
+  };
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  initAuth();
+  return children;
 }
 
 export async function signOut() {
   try {
-    // Limpa flags de tour/splash para não vazar entre contas
-    Object.keys(localStorage).filter(k => k.startsWith("fni_tour_done_")).forEach(k => localStorage.removeItem(k));
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith("fni_tour_done_"))
+      .forEach((key) => localStorage.removeItem(key));
     sessionStorage.removeItem("fni_splash_seen");
-    await supabase.auth.signOut();
-  } catch (e) {
-    console.error("signOut error", e);
+    clearAuthState();
+    await supabase.auth.signOut({ scope: "local" });
+  } catch (error) {
+    console.error("signOut error", error);
   } finally {
     window.location.replace("/auth");
   }

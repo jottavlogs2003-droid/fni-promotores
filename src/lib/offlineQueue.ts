@@ -83,7 +83,12 @@ export async function syncQueue(): Promise<{ ok: number; fail: number }> {
 
 export function startAutoSync() {
   if (typeof window === "undefined") return;
-  const trigger = () => { if (navigator.onLine) syncQueue(); };
+  const trigger = async () => {
+    if (!navigator.onLine) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+    await syncQueue();
+  };
   window.addEventListener("online", trigger);
   // tenta a cada 60s caso esteja online
   setInterval(trigger, 60_000);

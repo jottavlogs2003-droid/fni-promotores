@@ -46,6 +46,19 @@ export function useNotificacoes(userId: string | undefined) {
           }
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "notificacoes", filter: `user_id=eq.${userId}` },
+        () => {
+          void supabase
+            .from("notificacoes")
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false })
+            .limit(50)
+            .then(({ data }) => setNotificacoes((data ?? []) as Notificacao[]));
+        }
+      )
       .subscribe();
 
     return () => { mounted = false; supabase.removeChannel(ch); };

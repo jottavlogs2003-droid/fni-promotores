@@ -21,13 +21,13 @@ const signupSchema = loginSchema.extend({
 });
 
 export default function Auth() {
-  const { user, loading } = useAuth();
+  const { user, loading, ready } = useAuth();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState("login");
   const [recovery, setRecovery] = useState(false);
 
-  if (loading) {
+  if (!ready || loading) {
     return <div className="min-h-screen grid place-items-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
   if (user) return <Navigate to="/app" replace />;

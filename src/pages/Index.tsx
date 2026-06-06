@@ -7,9 +7,9 @@ import ContratanteApp from "./ContratanteApp";
 import { Logo } from "@/components/Logo";
 
 const AppRouter = () => {
-  const { user, primaryRole, loading } = useAuth();
+  const { user, primaryRole, loading, ready } = useAuth();
 
-  if (loading) {
+  if (!ready || loading) {
     return (
       <div className="min-h-screen grid place-items-center gradient-hero">
         <div className="flex flex-col items-center gap-4">
