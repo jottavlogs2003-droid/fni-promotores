@@ -141,7 +141,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   initAuth();
-  return <>{children}</>;
+  return children;
 }
 
 export async function signOut() {
