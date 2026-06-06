@@ -21,6 +21,7 @@ import ClientesAdmin from "./admin/ClientesAdmin";
 import RelatoriosPromotores from "./admin/RelatoriosPromotores";
 import LojasAdmin from "./admin/LojasAdmin";
 import { MonitoramentoPanel } from "@/components/MonitoramentoPanel";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -43,32 +44,32 @@ function AdminDashboard() {
   const [fin, setFin] = useState({ pagar: 0, receber: 0, lucro: 0 });
   const [recentes, setRecentes] = useState<any[]>([]);
 
-  useEffect(() => {
-    (async () => {
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const [proms, lojas, ci, rupt, vals, camps, recs, finData] = await Promise.all([
-        supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "promotor"),
-        supabase.from("lojas").select("id", { count: "exact", head: true }).eq("ativo", true),
-        supabase.from("check_ins").select("id", { count: "exact", head: true }).gte("hora_entrada", today.toISOString()),
-        supabase.from("rupturas").select("id", { count: "exact", head: true }).eq("status", "aberta"),
-        supabase.from("validades").select("id", { count: "exact", head: true }),
-        supabase.from("campanhas").select("id", { count: "exact", head: true }).eq("status", "ativa"),
-        supabase.from("check_ins").select("*, lojas(nome), profiles!check_ins_promotor_id_fkey(nome)").order("hora_entrada", { ascending: false }).limit(8),
-        supabase.from("resumo_financeiro_mensal").select("*").limit(1).maybeSingle(),
-      ]);
-      setStats({
-        promotores: proms.count ?? 0, lojas: lojas.count ?? 0, checkInsHoje: ci.count ?? 0,
-        rupturas: rupt.count ?? 0, validades: vals.count ?? 0, campanhas: camps.count ?? 0,
-      });
-      const f: any = finData.data ?? {};
-      setFin({
-        pagar: Number(f.total_pagar_promotores ?? 0),
-        receber: Number(f.total_receber_clientes ?? 0),
-        lucro: Number(f.lucro ?? 0),
-      });
-      setRecentes(recs.data ?? []);
-    })();
-  }, []);
+  async function load() {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const [proms, lojas, ci, rupt, vals, camps, recs, finData] = await Promise.all([
+      supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "promotor"),
+      supabase.from("lojas").select("id", { count: "exact", head: true }).eq("ativo", true),
+      supabase.from("check_ins").select("id", { count: "exact", head: true }).gte("hora_entrada", today.toISOString()),
+      supabase.from("rupturas").select("id", { count: "exact", head: true }).eq("status", "aberta"),
+      supabase.from("validades").select("id", { count: "exact", head: true }),
+      supabase.from("campanhas").select("id", { count: "exact", head: true }).eq("status", "ativa"),
+      supabase.from("check_ins").select("*, lojas(nome), profiles!check_ins_promotor_id_fkey(nome)").order("hora_entrada", { ascending: false }).limit(8),
+      supabase.from("resumo_financeiro_mensal").select("*").limit(1).maybeSingle(),
+    ]);
+    setStats({
+      promotores: proms.count ?? 0, lojas: lojas.count ?? 0, checkInsHoje: ci.count ?? 0,
+      rupturas: rupt.count ?? 0, validades: vals.count ?? 0, campanhas: camps.count ?? 0,
+    });
+    const f: any = finData.data ?? {};
+    setFin({
+      pagar: Number(f.total_pagar_promotores ?? 0),
+      receber: Number(f.total_receber_clientes ?? 0),
+      lucro: Number(f.lucro ?? 0),
+    });
+    setRecentes(recs.data ?? []);
+  }
+
+  useRealtimeRefresh(["user_roles", "lojas", "check_ins", "rupturas", "validades", "campanhas"], load, [], 10000);
 
   const BRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -185,9 +186,15 @@ function CrudList({ title, table, columns, formFields, parentField, rowActions }
     setLoading(false);
   }
   useEffect(() => {
-    load();
     if (parentField === "cliente_id") supabase.from("clientes").select("id,nome").then(({ data }) => setClientes(data ?? []));
-  }, []);
+  }, [parentField]);
+  useRealtimeRefresh([table, ...(parentField === "cliente_id" ? ["clientes"] : [])], async () => {
+    await load();
+    if (parentField === "cliente_id") {
+      const { data } = await supabase.from("clientes").select("id,nome");
+      setClientes(data ?? []);
+    }
+  }, [table, parentField], 12000);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
