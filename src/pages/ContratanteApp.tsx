@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import ValidadesView from "./admin/ValidadesView";
 import { MonitoramentoPanel } from "@/components/MonitoramentoPanel";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -29,22 +30,22 @@ function ContratanteDashboard() {
   const [stats, setStats] = useState({ lojas: 0, checkInsHoje: 0, rupturas: 0, fotos: 0 });
   const [recentes, setRecentes] = useState<any[]>([]);
 
-  useEffect(() => {
+  async function load() {
     if (!profile?.cliente_id) return;
-    (async () => {
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const { data: lojas } = await supabase.from("lojas").select("id").eq("cliente_id", profile.cliente_id);
-      const lojaIds = (lojas ?? []).map(l => l.id);
-      const [ci, rupt, fts, recs] = await Promise.all([
-        lojaIds.length ? supabase.from("check_ins").select("id", { count: "exact", head: true }).in("loja_id", lojaIds).gte("hora_entrada", today.toISOString()) : { count: 0 } as any,
-        lojaIds.length ? supabase.from("rupturas").select("id", { count: "exact", head: true }).in("loja_id", lojaIds).eq("status", "aberta") : { count: 0 } as any,
-        lojaIds.length ? supabase.from("fotos_execucao").select("id", { count: "exact", head: true }).in("loja_id", lojaIds) : { count: 0 } as any,
-        lojaIds.length ? supabase.from("check_ins").select("*, lojas(nome), profiles!check_ins_promotor_id_fkey(nome)").in("loja_id", lojaIds).order("hora_entrada", { ascending: false }).limit(8) : { data: [] } as any,
-      ]);
-      setStats({ lojas: lojas?.length ?? 0, checkInsHoje: ci.count ?? 0, rupturas: rupt.count ?? 0, fotos: fts.count ?? 0 });
-      setRecentes(recs.data ?? []);
-    })();
-  }, [profile]);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const { data: lojas } = await supabase.from("lojas").select("id").eq("cliente_id", profile.cliente_id);
+    const lojaIds = (lojas ?? []).map(l => l.id);
+    const [ci, rupt, fts, recs] = await Promise.all([
+      lojaIds.length ? supabase.from("check_ins").select("id", { count: "exact", head: true }).in("loja_id", lojaIds).gte("hora_entrada", today.toISOString()) : { count: 0 } as any,
+      lojaIds.length ? supabase.from("rupturas").select("id", { count: "exact", head: true }).in("loja_id", lojaIds).eq("status", "aberta") : { count: 0 } as any,
+      lojaIds.length ? supabase.from("fotos_execucao").select("id", { count: "exact", head: true }).in("loja_id", lojaIds) : { count: 0 } as any,
+      lojaIds.length ? supabase.from("check_ins").select("*, lojas(nome), profiles!check_ins_promotor_id_fkey(nome)").in("loja_id", lojaIds).order("hora_entrada", { ascending: false }).limit(8) : { data: [] } as any,
+    ]);
+    setStats({ lojas: lojas?.length ?? 0, checkInsHoje: ci.count ?? 0, rupturas: rupt.count ?? 0, fotos: fts.count ?? 0 });
+    setRecentes(recs.data ?? []);
+  }
+
+  useRealtimeRefresh(["lojas", "check_ins", "rupturas", "fotos_execucao", "profiles"], load, [profile?.cliente_id], 10000);
 
   if (!profile?.cliente_id) {
     return (
@@ -86,7 +87,10 @@ function ContratanteDashboard() {
 
 function GenericTable({ title, table, columns }: { title: string; table: string; columns: { key: string; label: string }[] }) {
   const [items, setItems] = useState<any[]>([]);
-  useEffect(() => { (supabase as any).from(table).select("*, lojas(nome), produtos(nome)").order("created_at", { ascending: false }).limit(100).then(({ data }: any) => setItems(data ?? [])); }, [table]);
+  useRealtimeRefresh([table, "lojas", "produtos"], async () => {
+    const { data }: any = await (supabase as any).from(table).select("*, lojas(nome), produtos(nome)").order("created_at", { ascending: false }).limit(100);
+    setItems(data ?? []);
+  }, [table], 12000);
   return (
     <div className="space-y-4 animate-fade-in-up">
       <h1 className="text-3xl font-display font-bold">{title}</h1>
@@ -122,6 +126,11 @@ function MinhasFaturas() {
     if (!profile?.cliente_id) return;
     supabase.from("faturas_clientes").select("*").eq("cliente_id", profile.cliente_id).order("created_at", { ascending: false }).then(({ data }) => setFaturas(data ?? []));
   }, [profile]);
+  useRealtimeRefresh(["faturas_clientes"], async () => {
+    if (!profile?.cliente_id) return;
+    const { data } = await supabase.from("faturas_clientes").select("*").eq("cliente_id", profile.cliente_id).order("created_at", { ascending: false });
+    setFaturas(data ?? []);
+  }, [profile?.cliente_id], 15000);
 
   async function abrir(f: any) {
     if (openId === f.id) { setOpenId(null); return; }
