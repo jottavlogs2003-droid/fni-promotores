@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MapPin, Clock } from "lucide-react";
+import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 const promotorIcon = L.divIcon({
   className: "",
@@ -52,13 +53,7 @@ export function MonitoramentoPanel({ clienteId }: { clienteId?: string | null })
     }));
     setRows(mapped); setLoading(false);
   }
-  useEffect(() => {
-    load();
-    const ch = supabase.channel(`mon-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "check_ins" }, () => load())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [clienteId]);
+  useRealtimeRefresh(["check_ins", "lojas", "profiles"], load, [clienteId], 10000);
 
   const visiveis = useMemo(() => filtro === "ativos" ? rows.filter(r => !r.hora_saida) : rows, [rows, filtro]);
   const ativos = rows.filter(r => !r.hora_saida).length;
