@@ -8,6 +8,10 @@ export function useRealtimeRefresh(
   intervalMs = 15000,
 ) {
   const reloadRef = useRef(reload);
+  const timerRef = useRef<number | null>(null);
+  const inFlightRef = useRef(false);
+  const queuedRef = useRef(false);
+  const lastRunRef = useRef(0);
 
   useEffect(() => {
     reloadRef.current = reload;
@@ -17,35 +21,77 @@ export function useRealtimeRefresh(
     if (typeof window === "undefined") return;
 
     let active = true;
-    const safeReload = () => {
-      if (!active) return;
-      void Promise.resolve(reloadRef.current()).catch((error) => {
-        console.error("realtime refresh error", error);
-      });
+    const clearPending = () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
     };
 
-    safeReload();
+    const executeReload = async () => {
+      if (!active || inFlightRef.current) {
+        queuedRef.current = true;
+        return;
+      }
+
+      inFlightRef.current = true;
+      queuedRef.current = false;
+
+      try {
+        await Promise.resolve(reloadRef.current());
+        lastRunRef.current = Date.now();
+      } catch (error) {
+        console.error("realtime refresh error", error);
+      } finally {
+        inFlightRef.current = false;
+        if (active && queuedRef.current) {
+          queuedRef.current = false;
+          scheduleReload(true);
+        }
+      }
+    };
+
+    const scheduleReload = (priority = false) => {
+      if (!active || !navigator.onLine) return;
+      if (document.hidden && !priority) return;
+
+      const elapsed = Date.now() - lastRunRef.current;
+      const debounceMs = priority ? 0 : Math.max(0, 1200 - elapsed);
+
+      clearPending();
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        void executeReload();
+      }, debounceMs);
+    };
+
+    scheduleReload(true);
 
     const uniqueTables = Array.from(new Set(tables.filter(Boolean)));
-    const channels = uniqueTables.map((table, index) =>
-      supabase
-        .channel(`rt-${table}-${index}-${Math.random().toString(36).slice(2)}`)
-        .on("postgres_changes", { event: "*", schema: "public", table }, safeReload)
-        .subscribe(),
-    );
+    const channel = uniqueTables.reduce(
+      (acc, table) => acc.on("postgres_changes", { event: "*", schema: "public", table }, () => scheduleReload()),
+      supabase.channel(`rt-${uniqueTables.join("-") || "none"}-${Math.random().toString(36).slice(2)}`),
+    ).subscribe();
 
-    window.addEventListener("focus", safeReload);
-    window.addEventListener("online", safeReload);
-    const intervalId = window.setInterval(safeReload, intervalMs);
+    const handleFocus = () => scheduleReload(true);
+    const handleOnline = () => scheduleReload(true);
+    const handleVisibility = () => {
+      if (!document.hidden) scheduleReload(true);
+    };
+
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("online", handleOnline);
+    document.addEventListener("visibilitychange", handleVisibility);
+    const intervalId = window.setInterval(() => scheduleReload(), intervalMs);
 
     return () => {
       active = false;
-      window.removeEventListener("focus", safeReload);
-      window.removeEventListener("online", safeReload);
+      clearPending();
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("online", handleOnline);
+      document.removeEventListener("visibilitychange", handleVisibility);
       window.clearInterval(intervalId);
-      channels.forEach((channel) => {
-        void supabase.removeChannel(channel);
-      });
+      void supabase.removeChannel(channel);
     };
   }, deps);
 }
