@@ -67,16 +67,19 @@ export default function GeradorEscala() {
 
   useEffect(() => {
     (async () => {
-      const [{ data: profs }, { data: lj }, { data: cls }] = await Promise.all([
+      const [{ data: profs }, { data: lj }, { data: cls }, { data: fin }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id,nome,tipo_promotor,permite_dupla_diaria,loja_fixa_id,ativo")
+          .select("id,nome,tipo_promotor,loja_fixa_id,ativo")
           .eq("ativo", true),
         supabase.from("lojas").select("id,nome,cliente_id").eq("ativo", true),
         supabase.from("clientes").select("id,nome").eq("ativo", true),
+        supabase.from("profiles_financeiro").select("id, permite_dupla_diaria"),
       ]);
+      const finMap = new Map((fin ?? []).map((f: any) => [f.id, f.permite_dupla_diaria]));
+      const profsWithFin = (profs ?? []).map((p: any) => ({ ...p, permite_dupla_diaria: finMap.get(p.id) ?? false }));
       // só promotores (não admins/contratantes)
-      const ids = (profs ?? []).map((p: any) => p.id);
+      const ids = profsWithFin.map((p: any) => p.id);
       let onlyProm: any[] = [];
       if (ids.length) {
         const { data: roles } = await supabase
@@ -85,7 +88,7 @@ export default function GeradorEscala() {
           .eq("role", "promotor")
           .in("user_id", ids);
         const setIds = new Set((roles ?? []).map((r: any) => r.user_id));
-        onlyProm = (profs ?? []).filter((p: any) => setIds.has(p.id));
+        onlyProm = profsWithFin.filter((p: any) => setIds.has(p.id));
       }
       setPromotores(onlyProm as Promotor[]);
       setPromotoresSelecionados(new Set(onlyProm.map((p: any) => p.id)));
