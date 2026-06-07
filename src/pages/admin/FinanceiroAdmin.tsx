@@ -476,7 +476,8 @@ export function EscalaAdmin() {
       if (error) throw error;
       if (data.user) {
         const tel = (fd.get("telefone") as string) || null;
-        await supabase.from("profiles").update({ nome, valor_diaria, telefone: tel }).eq("id", data.user.id);
+        await supabase.from("profiles").update({ nome, telefone: tel }).eq("id", data.user.id);
+        await supabase.from("profiles_financeiro").upsert({ id: data.user.id, valor_diaria });
       }
       toast.success(`Promotor "${nome}" cadastrado!`);
       setOpenProm(false); loadPromotores();
