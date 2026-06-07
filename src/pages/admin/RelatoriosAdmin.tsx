@@ -45,7 +45,7 @@ export default function RelatoriosAdmin() {
     const { data: fin } = ids.length
       ? await supabase.from("profiles_financeiro").select("id, valor_diaria").in("id", ids)
       : { data: [] as any[] } as any;
-    const finMap = new Map((fin ?? []).map((f: any) => [f.id, f]));
+    const finMap = new Map<string, any>((fin ?? []).map((f: any) => [f.id, f]));
     return (escalas ?? []).map((r: any) => ({
       ...r,
       profiles: { ...(r.profiles ?? {}), valor_diaria: finMap.get(r.promotor_id)?.valor_diaria ?? 0 },
