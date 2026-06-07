@@ -319,13 +319,15 @@ function PromotoresAdmin() {
   const [busy, setBusy] = useState(false);
 
   async function load() {
-    const [{ data: profs }, { data: rolesData }] = await Promise.all([
+    const [{ data: profs }, { data: rolesData }, { data: finData }] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
+      supabase.from("profiles_financeiro").select("*"),
     ]);
     const byUser = new Map<string, string>();
     (rolesData ?? []).forEach((r: any) => byUser.set(r.user_id, r.role));
-    setProfiles((profs ?? []).map((p: any) => ({ ...p, role: byUser.get(p.id) ?? null })));
+    const finMap = new Map((finData ?? []).map((f: any) => [f.id, f]));
+    setProfiles((profs ?? []).map((p: any) => ({ ...p, ...(finMap.get(p.id) ?? {}), role: byUser.get(p.id) ?? null })));
   }
   useEffect(() => { load(); }, []);
 
