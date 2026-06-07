@@ -97,14 +97,28 @@ export function PagamentosPromotores() {
   const [fim, setFim] = useState(lastOfMonth());
 
   async function load() {
-    const { data } = await supabase.from("pagamentos_promotores")
-      .select("*, profiles!pagamentos_promotores_promotor_id_fkey(nome, email, chave_pix, forma_pagamento)")
-      .order("created_at", { ascending: false });
-    setPagamentos(data ?? []);
+    const [{ data: pags }, { data: fin }] = await Promise.all([
+      supabase.from("pagamentos_promotores")
+        .select("*, profiles!pagamentos_promotores_promotor_id_fkey(nome, email)")
+        .order("created_at", { ascending: false }),
+      supabase.from("profiles_financeiro").select("id, chave_pix, forma_pagamento"),
+    ]);
+    const finMap = new Map((fin ?? []).map((f: any) => [f.id, f]));
+    setPagamentos((pags ?? []).map((p: any) => ({
+      ...p,
+      profiles: { ...(p.profiles ?? {}), ...(finMap.get(p.promotor_id) ?? {}) },
+    })));
   }
   useEffect(() => {
     load();
-    supabase.from("profiles").select("id, nome, email, valor_diaria, valor_hora_extra, forma_pagamento").then(({ data }) => setPromotores(data ?? []));
+    (async () => {
+      const [{ data: profs }, { data: fin }] = await Promise.all([
+        supabase.from("profiles").select("id, nome, email"),
+        supabase.from("profiles_financeiro").select("id, valor_diaria, valor_hora_extra, forma_pagamento"),
+      ]);
+      const finMap = new Map((fin ?? []).map((f: any) => [f.id, f]));
+      setPromotores((profs ?? []).map((p: any) => ({ ...p, ...(finMap.get(p.id) ?? {}) })));
+    })();
   }, []);
 
   async function gerarLote() {
