@@ -7,6 +7,7 @@ export function useRealtimeRefresh(
   deps: DependencyList,
   intervalMs = 15000,
 ) {
+  const tablesKey = tables.filter(Boolean).sort().join("|");
   const reloadRef = useRef(reload);
   const timerRef = useRef<number | null>(null);
   const inFlightRef = useRef(false);
@@ -67,7 +68,7 @@ export function useRealtimeRefresh(
 
     scheduleReload(true);
 
-    const uniqueTables = Array.from(new Set(tables.filter(Boolean)));
+    const uniqueTables = Array.from(new Set(tablesKey ? tablesKey.split("|") : []));
     const channel = uniqueTables.reduce(
       (acc, table) => acc.on("postgres_changes", { event: "*", schema: "public", table }, () => scheduleReload()),
       supabase.channel(`rt-${uniqueTables.join("-") || "none"}-${Math.random().toString(36).slice(2)}`),
@@ -93,5 +94,5 @@ export function useRealtimeRefresh(
       window.clearInterval(intervalId);
       void supabase.removeChannel(channel);
     };
-  }, deps);
+  }, [intervalMs, tablesKey, ...deps]);
 }
