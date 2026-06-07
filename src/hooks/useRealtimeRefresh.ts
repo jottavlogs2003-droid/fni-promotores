@@ -8,6 +8,7 @@ export function useRealtimeRefresh(
   intervalMs = 15000,
 ) {
   const tablesKey = tables.filter(Boolean).sort().join("|");
+  const depsKey = JSON.stringify(deps);
   const reloadRef = useRef(reload);
   const timerRef = useRef<number | null>(null);
   const inFlightRef = useRef(false);
@@ -94,5 +95,5 @@ export function useRealtimeRefresh(
       window.clearInterval(intervalId);
       void supabase.removeChannel(channel);
     };
-  }, [intervalMs, tablesKey, ...deps]);
+  }, [depsKey, intervalMs, tablesKey]);
 }
