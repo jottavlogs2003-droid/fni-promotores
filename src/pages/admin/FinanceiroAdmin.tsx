@@ -401,8 +401,12 @@ export function EscalaAdmin() {
     setEscalas(data ?? []);
   }
   async function loadPromotores() {
-    const { data } = await supabase.from("profiles").select("id, nome, tipo_promotor, jornada_horas, valor_diaria, permite_dupla_diaria");
-    setPromotores(data ?? []);
+    const [{ data: profs }, { data: fin }] = await Promise.all([
+      supabase.from("profiles").select("id, nome, tipo_promotor, jornada_horas"),
+      supabase.from("profiles_financeiro").select("id, valor_diaria, permite_dupla_diaria"),
+    ]);
+    const finMap = new Map((fin ?? []).map((f: any) => [f.id, f]));
+    setPromotores((profs ?? []).map((p: any) => ({ ...p, ...(finMap.get(p.id) ?? {}) })));
   }
   useEffect(() => {
     load(); loadPromotores();
