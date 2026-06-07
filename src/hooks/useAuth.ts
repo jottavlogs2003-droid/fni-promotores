@@ -35,6 +35,7 @@ let state: AuthState = {
 const listeners = new Set<() => void>();
 let initialized = false;
 let activeLoadToken = 0;
+let loadingUserId: string | null = null;
 
 function emit() {
   listeners.forEach((listener) => listener());
@@ -46,7 +47,10 @@ function setState(next: Partial<AuthState>) {
 }
 
 async function loadUserData(userId: string) {
+  if (loadingUserId === userId && state.loading) return;
+
   const token = ++activeLoadToken;
+  loadingUserId = userId;
   setState({ loading: true, ready: true });
 
   try {
@@ -69,11 +73,14 @@ async function loadUserData(userId: string) {
     if (token !== activeLoadToken || state.user?.id !== userId) return;
     console.error("auth user data error", error);
     setState({ profile: null, roles: [], loading: false, ready: true });
+  } finally {
+    if (loadingUserId === userId) loadingUserId = null;
   }
 }
 
 function clearAuthState() {
   activeLoadToken += 1;
+  loadingUserId = null;
   setState({
     user: null,
     session: null,
@@ -101,9 +108,17 @@ function initAuth() {
   });
 
   supabase.auth.onAuthStateChange((_event, session) => {
+    const currentUserId = state.user?.id ?? null;
+    const nextUserId = session?.user?.id ?? null;
+
     setState({ user: session?.user ?? null, session, ready: true });
 
     if (session?.user) {
+      if (currentUserId === nextUserId && state.profile && state.roles.length > 0) {
+        setState({ loading: false, ready: true });
+        return;
+      }
+
       queueMicrotask(() => {
         void loadUserData(session.user.id);
       });
