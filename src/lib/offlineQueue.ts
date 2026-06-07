@@ -1,6 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 
 const KEY = "fni_offline_checkins_v1";
+const AUTO_SYNC_INTERVAL_MS = 120_000;
+
+let autoSyncStarted = false;
+let autoSyncTimer: number | null = null;
 
 export type OfflineCheckIn = {
   id: string;
@@ -82,15 +86,25 @@ export async function syncQueue(): Promise<{ ok: number; fail: number }> {
 }
 
 export function startAutoSync() {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || autoSyncStarted) return;
+  autoSyncStarted = true;
+
   const trigger = async () => {
-    if (!navigator.onLine) return;
+    if (!navigator.onLine || document.hidden || syncing || pendingCount() === 0) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
     await syncQueue();
   };
+
   window.addEventListener("online", trigger);
-  // tenta a cada 60s caso esteja online
-  setInterval(trigger, 60_000);
-  trigger();
+  window.addEventListener("focus", trigger);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) void trigger();
+  });
+
+  autoSyncTimer = window.setInterval(() => {
+    void trigger();
+  }, AUTO_SYNC_INTERVAL_MS);
+
+  void trigger();
 }
