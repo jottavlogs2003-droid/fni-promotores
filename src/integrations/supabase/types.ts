@@ -976,6 +976,14 @@ export type Database = {
         Returns: boolean
       }
       is_mes_fechado: { Args: { _data: string }; Returns: boolean }
+      user_can_access_campanha: {
+        Args: { _campanha_id: string }
+        Returns: boolean
+      }
+      user_can_access_campanha_promotor: {
+        Args: { _campanha_id: string; _promotor_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "contratante" | "promotor"
