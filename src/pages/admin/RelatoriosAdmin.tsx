@@ -35,13 +35,21 @@ export default function RelatoriosAdmin() {
 
   async function carregarDados() {
     let q = supabase.from("escalas")
-      .select("*, profiles!escalas_promotor_id_fkey(nome, valor_diaria), lojas!inner(nome, cidade, cliente_id, clientes(nome, valor_diaria_cobrada))")
+      .select("*, profiles!escalas_promotor_id_fkey(nome), lojas!inner(nome, cidade, cliente_id, clientes(nome, valor_diaria_cobrada))")
       .gte("data", inicio).lte("data", fim);
     if (filtroLoja) q = q.eq("loja_id", filtroLoja);
     if (filtroPromotor) q = q.eq("promotor_id", filtroPromotor);
     if (filtroCliente) q = q.eq("lojas.cliente_id", filtroCliente);
     const { data: escalas } = await q.order("data");
-    return escalas ?? [];
+    const ids = Array.from(new Set((escalas ?? []).map((r: any) => r.promotor_id).filter(Boolean)));
+    const { data: fin } = ids.length
+      ? await supabase.from("profiles_financeiro").select("id, valor_diaria").in("id", ids)
+      : { data: [] as any[] } as any;
+    const finMap = new Map<string, any>((fin ?? []).map((f: any) => [f.id, f]));
+    return (escalas ?? []).map((r: any) => ({
+      ...r,
+      profiles: { ...(r.profiles ?? {}), valor_diaria: finMap.get(r.promotor_id)?.valor_diaria ?? 0 },
+    }));
   }
 
   function agrupar(rows: any[]) {

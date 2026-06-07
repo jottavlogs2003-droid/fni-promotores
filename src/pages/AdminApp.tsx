@@ -319,13 +319,15 @@ function PromotoresAdmin() {
   const [busy, setBusy] = useState(false);
 
   async function load() {
-    const [{ data: profs }, { data: rolesData }] = await Promise.all([
+    const [{ data: profs }, { data: rolesData }, { data: finData }] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
+      supabase.from("profiles_financeiro").select("*"),
     ]);
     const byUser = new Map<string, string>();
     (rolesData ?? []).forEach((r: any) => byUser.set(r.user_id, r.role));
-    setProfiles((profs ?? []).map((p: any) => ({ ...p, role: byUser.get(p.id) ?? null })));
+    const finMap = new Map((finData ?? []).map((f: any) => [f.id, f]));
+    setProfiles((profs ?? []).map((p: any) => ({ ...p, ...(finMap.get(p.id) ?? {}), role: byUser.get(p.id) ?? null })));
   }
   useEffect(() => { load(); }, []);
 
@@ -339,22 +341,30 @@ function PromotoresAdmin() {
     e.preventDefault();
     setBusy(true);
     const fd = new FormData(e.currentTarget);
-    const payload: any = {
-      cpf: fd.get("cpf") || null,
+    const perfilPayload: any = {
       telefone: fd.get("telefone") || null,
       tipo_promotor: fd.get("tipo_promotor") || null,
       jornada_horas: fd.get("jornada_horas") ? Number(fd.get("jornada_horas")) : null,
+    };
+    const finPayload: any = {
+      id: editing.id,
+      cpf: fd.get("cpf") || null,
       permite_dupla_diaria: fd.get("permite_dupla_diaria") === "on",
       valor_diaria: Number(fd.get("valor_diaria") || 0),
       valor_hora_extra: Number(fd.get("valor_hora_extra") || 0),
       forma_pagamento: fd.get("forma_pagamento") || null,
       chave_pix: fd.get("chave_pix") || null,
     };
-    const { error } = await supabase.from("profiles").update(payload).eq("id", editing.id);
+    const [{ error: e1 }, { error: e2 }] = await Promise.all([
+      supabase.from("profiles").update(perfilPayload).eq("id", editing.id),
+      supabase.from("profiles_financeiro").upsert(finPayload),
+    ]);
     setBusy(false);
+    const error = e1 || e2;
     if (error) toast.error(error.message);
     else { toast.success("Salvo!"); setEditing(null); load(); }
   }
+
 
   return (
     <div className="space-y-5 animate-fade-in-up">

@@ -738,62 +738,44 @@ export type Database = {
         Row: {
           ativo: boolean
           avatar_url: string | null
-          chave_pix: string | null
           cliente_id: string | null
-          cpf: string | null
           created_at: string
           email: string
-          forma_pagamento: string | null
           id: string
           jornada_horas: number | null
           loja_fixa_id: string | null
           nome: string
-          permite_dupla_diaria: boolean | null
           telefone: string | null
           tipo_promotor: string | null
           updated_at: string
-          valor_diaria: number | null
-          valor_hora_extra: number | null
         }
         Insert: {
           ativo?: boolean
           avatar_url?: string | null
-          chave_pix?: string | null
           cliente_id?: string | null
-          cpf?: string | null
           created_at?: string
           email: string
-          forma_pagamento?: string | null
           id: string
           jornada_horas?: number | null
           loja_fixa_id?: string | null
           nome: string
-          permite_dupla_diaria?: boolean | null
           telefone?: string | null
           tipo_promotor?: string | null
           updated_at?: string
-          valor_diaria?: number | null
-          valor_hora_extra?: number | null
         }
         Update: {
           ativo?: boolean
           avatar_url?: string | null
-          chave_pix?: string | null
           cliente_id?: string | null
-          cpf?: string | null
           created_at?: string
           email?: string
-          forma_pagamento?: string | null
           id?: string
           jornada_horas?: number | null
           loja_fixa_id?: string | null
           nome?: string
-          permite_dupla_diaria?: boolean | null
           telefone?: string | null
           tipo_promotor?: string | null
           updated_at?: string
-          valor_diaria?: number | null
-          valor_hora_extra?: number | null
         }
         Relationships: [
           {
@@ -801,6 +783,50 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles_financeiro: {
+        Row: {
+          chave_pix: string | null
+          cpf: string | null
+          created_at: string
+          forma_pagamento: string | null
+          id: string
+          permite_dupla_diaria: boolean | null
+          updated_at: string
+          valor_diaria: number | null
+          valor_hora_extra: number | null
+        }
+        Insert: {
+          chave_pix?: string | null
+          cpf?: string | null
+          created_at?: string
+          forma_pagamento?: string | null
+          id: string
+          permite_dupla_diaria?: boolean | null
+          updated_at?: string
+          valor_diaria?: number | null
+          valor_hora_extra?: number | null
+        }
+        Update: {
+          chave_pix?: string | null
+          cpf?: string | null
+          created_at?: string
+          forma_pagamento?: string | null
+          id?: string
+          permite_dupla_diaria?: boolean | null
+          updated_at?: string
+          valor_diaria?: number | null
+          valor_hora_extra?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_financeiro_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
