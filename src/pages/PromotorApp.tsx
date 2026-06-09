@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileAppLayout } from "@/components/layouts/MobileAppLayout";
 import { Card } from "@/components/ui/card";
@@ -117,12 +117,14 @@ function PromotorHome() {
 
 function CheckInPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [lojas, setLojas] = useState<any[]>([]);
   const [selectedLoja, setSelectedLoja] = useState<string>("");
   const [position, setPosition] = useState<GeolocationPosition | null>(null);
   const [selfie, setSelfie] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>("");
+
 
   useRealtimeRefresh(["lojas"], async () => {
     if (!user) return;
@@ -181,7 +183,7 @@ function CheckInPage() {
     try {
       if (!navigator.onLine) throw new Error("offline");
       await tryOnline();
-      window.location.href = loja?.requer_execucao === false ? "/app" : "/app/execucao";
+      navigate(loja?.requer_execucao === false ? "/app" : "/app/execucao", { replace: true });
     } catch (err: any) {
       // Salva offline e segue
       try {
@@ -197,7 +199,7 @@ function CheckInPage() {
         });
         setError(null);
         alert("Check-in salvo offline. Será enviado quando a conexão voltar.");
-        window.location.href = "/app";
+        navigate("/app", { replace: true });
       } catch (e: any) {
         setError(e.message ?? String(err));
       }
@@ -245,6 +247,8 @@ function CheckInPage() {
 }
 
 function ExecucaoPage() {
+  const navigate = useNavigate();
+
   const { user } = useAuth();
   const [openCheckIn, setOpenCheckIn] = useState<any>(null);
   const [checklist, setChecklist] = useState({ loja_organizada: false, produto_exposto: false, preco_visivel: false, material_merchandising: false });
@@ -292,10 +296,10 @@ function ExecucaoPage() {
           hora_saida: new Date().toISOString(),
           latitude_saida: pos.coords.latitude, longitude_saida: pos.coords.longitude,
         }).eq("id", openCheckIn.id);
-        window.location.href = "/app";
+        navigate("/app", { replace: true });
       }, async () => {
         await supabase.from("check_ins").update({ hora_saida: new Date().toISOString() }).eq("id", openCheckIn.id);
-        window.location.href = "/app";
+        navigate("/app", { replace: true });
       });
     } finally { setBusy(false); }
   }
