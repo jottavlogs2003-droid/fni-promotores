@@ -1,14 +1,41 @@
 // Edge function: cria notificações para promotores com turnos nas próximas 2h
 // e alerta admins sobre turnos sem check-in (mais de 30min após início).
+// Protegida: requer CRON_SECRET via header x-cron-secret OU JWT de admin.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret",
 };
+
+async function isAuthorized(req: Request): Promise<boolean> {
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  const providedSecret = req.headers.get("x-cron-secret");
+  if (cronSecret && providedSecret && providedSecret === cronSecret) return true;
+
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return false;
+  const jwt = authHeader.replace("Bearer ", "");
+  const userClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: `Bearer ${jwt}` } } },
+  );
+  const { data, error } = await userClient.auth.getUser();
+  if (error || !data.user) return false;
+  const { data: roles } = await userClient.from("user_roles").select("role").eq("user_id", data.user.id);
+  return !!roles?.some((r: any) => r.role === "admin");
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  if (!(await isAuthorized(req))) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -19,10 +46,6 @@ Deno.serve(async (req) => {
   const hoje = agora.toISOString().slice(0, 10);
   const nowMin = agora.getHours() * 60 + agora.getMinutes();
 
-  let lembretes = 0;
-  let alertas = 0;
-
-  // 1) Buscar escalas de hoje
   const { data: escalas, error } = await supabase
     .from("escalas")
     .select("id,promotor_id,loja_id,data,hora_inicio,status,check_in_id,lojas(nome)")
@@ -30,13 +53,12 @@ Deno.serve(async (req) => {
     .eq("status", "agendado");
 
   if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: "internal" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  // Admins (para alertas)
   const { data: adminRoles } = await supabase
     .from("user_roles")
     .select("user_id")
@@ -49,9 +71,7 @@ Deno.serve(async (req) => {
     const diff = startMin - nowMin;
     const lojaNome = (esc as any).lojas?.nome ?? "loja";
 
-    // Lembrete: turno começa em 0 a 120 minutos
     if (diff > 0 && diff <= 120) {
-      // Evita duplicar: checa se já existe notificação tipo 'lembrete' para esta escala hoje
       const { data: jaExiste } = await supabase
         .from("notificacoes")
         .select("id")
@@ -65,11 +85,9 @@ Deno.serve(async (req) => {
           mensagem: `Você tem turno em ${lojaNome} às ${esc.hora_inicio}.`,
           tipo: `lembrete:${esc.id}`,
         });
-        lembretes++;
       }
     }
 
-    // Alerta: passou 30 min do início e ainda sem check-in
     if (diff <= -30 && !esc.check_in_id && adminIds.length > 0) {
       const { data: jaAlertou } = await supabase
         .from("notificacoes")
@@ -84,13 +102,12 @@ Deno.serve(async (req) => {
           tipo: `noshow:${esc.id}`,
         }));
         await supabase.from("notificacoes").insert(rows);
-        alertas += rows.length;
       }
     }
   }
 
   return new Response(
-    JSON.stringify({ ok: true, lembretes, alertas, escalas: escalas?.length ?? 0 }),
+    JSON.stringify({ ok: true }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
   );
 });
