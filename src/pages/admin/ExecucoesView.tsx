@@ -26,9 +26,10 @@ export default function ExecucoesView({ clienteId }: { clienteId?: string | null
         id, score, loja_organizada, produto_exposto, preco_visivel, material_merchandising,
         observacoes, created_at,
         check_in_id,
-        profiles!execucoes_promotor_id_fkey(nome, email, tipo_promotor),
+        profiles!execucoes_promotor_id_fkey(nome, email, tipo_promotor, avatar_url),
         lojas!inner(nome, cidade, estado, cliente_id, clientes(nome)),
-        check_ins!execucoes_check_in_id_fkey(hora_entrada, hora_saida, distancia_metros, selfie_url)
+        check_ins!execucoes_check_in_id_fkey(hora_entrada, hora_saida, distancia_metros, selfie_url),
+        fotos_execucao(id, url, tipo)
       `)
       .order("created_at", { ascending: false })
       .limit(500);
