@@ -404,12 +404,19 @@ function PromotoresAdmin() {
                 <tr key={p.id} className="border-b border-border last:border-0 hover:bg-card/40">
                   <td className="p-3 font-medium">{p.nome}</td>
                   <td className="p-3 text-xs">{p.email}</td>
-                  <td className="p-3 text-xs">{p.tipo_promotor ?? "—"} · {p.jornada_horas ?? "—"}h</td>
+                  <td className="p-3 text-xs">
+                    <Badge className="bg-primary/10 text-primary border-primary/30">{(p.tipo_promotor ?? "—").replace("_"," ")}</Badge>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      {p.tipo_promotor === "marca" && p.marcas_atendidas?.length ? `Marcas: ${p.marcas_atendidas.join(", ")}` : null}
+                      {p.tipo_promotor === "rota_fixa" && p.rota_lojas?.length ? `${p.rota_lojas.length} loja(s) na rota` : null}
+                      {p.jornada_horas ? ` · ${p.jornada_horas}h` : ""}
+                    </div>
+                  </td>
                   <td className="p-3 text-right">{p.valor_diaria ? Number(p.valor_diaria).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}</td>
-                  <td className="p-3 text-xs">{p.forma_pagamento ?? "—"}</td>
+                  <td className="p-3 text-xs">{p.forma_pagamento ?? "—"}{p.chave_pix ? <div className="text-[10px] text-muted-foreground truncate max-w-[140px]" title={p.chave_pix}>PIX: {p.chave_pix}</div> : null}</td>
                   <td className="p-3"><Badge>{p.role ?? "—"}</Badge></td>
                   <td className="p-3 flex flex-wrap gap-1">
-                    <Button size="sm" variant="outline" onClick={() => setEditing(p)}>Editar dados</Button>
+                    <Button size="sm" variant="outline" onClick={() => openEdit(p)}>Editar dados</Button>
                     <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "admin")}>A</Button>
                     <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "contratante")}>C</Button>
                     <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "promotor")}>P</Button>
