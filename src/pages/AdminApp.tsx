@@ -76,10 +76,10 @@ function AdminDashboard() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard label="Promotores" value={stats.promotores} icon={Users} variant="primary" />
-        <StatCard label="Lojas ativas" value={stats.lojas} icon={Store} variant="secondary" />
+        <StatCard label="Lojas ativas" value={stats.lojas} icon={Building2} variant="secondary" />
         <StatCard label="Check-ins hoje" value={stats.checkInsHoje} icon={MapPin} variant="success" />
         <StatCard label="Rupturas abertas" value={stats.rupturas} icon={Package} variant="warning" />
-        <StatCard label="Validades" value={stats.validades} icon={FileText} variant="primary" />
+        <StatCard label="Execuções" value={stats.validades} icon={FileText} variant="primary" />
         <StatCard label="Campanhas ativas" value={stats.campanhas} icon={Megaphone} variant="secondary" />
       </div>
 
