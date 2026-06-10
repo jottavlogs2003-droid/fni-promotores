@@ -8,36 +8,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon, Settings, UserCheck } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EscalaAdmin } from "./admin/FinanceiroAdmin";
 import GeradorEscala from "./admin/GeradorEscala";
-import MapaAoVivo from "./admin/MapaAoVivo";
 import FinanceiroHub from "./admin/FinanceiroHub";
 import ConfigAdmin from "./admin/ConfigAdmin";
-import ValidadesView from "./admin/ValidadesView";
-import ClientesAdmin from "./admin/ClientesAdmin";
-import RelatoriosPromotores from "./admin/RelatoriosPromotores";
-import LojasAdmin from "./admin/LojasAdmin";
+import ExecucoesView from "./admin/ExecucoesView";
+import ClientesLojasAdmin from "./admin/ClientesLojasAdmin";
 import { MonitoramentoPanel } from "@/components/MonitoramentoPanel";
 import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/app/mapa", label: "Mapa ao vivo", icon: MapIcon },
+  { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
   { to: "/app/escala", label: "Escala", icon: Calendar },
   { to: "/app/escala-auto", label: "Gerar escala", icon: Wand2 },
   { to: "/app/promotores", label: "Promotores", icon: Users },
-  { to: "/app/rel-promotores", label: "Rel. Promotores", icon: UserCheck },
-  { to: "/app/clientes", label: "Clientes", icon: Building2 },
-  { to: "/app/lojas", label: "Lojas", icon: Store },
+  { to: "/app/clientes-lojas", label: "Clientes & Lojas", icon: Building2 },
   { to: "/app/campanhas", label: "Campanhas", icon: Megaphone },
   { to: "/app/financeiro", label: "Financeiro", icon: DollarSign },
-  { to: "/app/validades", label: "Validades", icon: Package },
-  { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
+  { to: "/app/execucoes", label: "Execuções", icon: Package },
   { to: "/app/config", label: "Configurações", icon: Settings },
 ];
+
 
 function AdminDashboard() {
   const [stats, setStats] = useState({ promotores: 0, lojas: 0, checkInsHoje: 0, rupturas: 0, validades: 0, campanhas: 0 });
