@@ -438,9 +438,13 @@ function PromotoresAdmin() {
                 <div><Label>Telefone</Label><Input name="telefone" defaultValue={editing.telefone ?? ""} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>Tipo</Label>
-                  <select name="tipo_promotor" defaultValue={editing.tipo_promotor ?? ""} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                    <option value="">—</option><option value="fixo">Fixo</option><option value="rotativo">Rotativo</option>
+                <div><Label>Tipo de promotor</Label>
+                  <select value={tipoSel} onChange={e => setTipoSel(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">—</option>
+                    <option value="rota_fixa">Rota fixa (várias lojas)</option>
+                    <option value="loja_fixa">Loja fixa (uma loja)</option>
+                    <option value="marca">Por marca</option>
+                    <option value="rotativo">Rotativo</option>
                   </select>
                 </div>
                 <div><Label>Jornada (h)</Label>
@@ -449,6 +453,54 @@ function PromotoresAdmin() {
                   </select>
                 </div>
               </div>
+
+              {tipoSel === "loja_fixa" && (
+                <div><Label>Loja fixa</Label>
+                  <select value={lojaFixaSel} onChange={e => setLojaFixaSel(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">Selecione…</option>
+                    {lojas.map(l => <option key={l.id} value={l.id}>{l.nome} {l.cidade ? `· ${l.cidade}` : ""} {l.clientes?.nome ? `(${l.clientes.nome})` : ""}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {tipoSel === "rota_fixa" && (
+                <div>
+                  <Label>Lojas da rota ({rotaSel.length})</Label>
+                  <div className="max-h-44 overflow-y-auto rounded-md border border-input bg-background p-2 space-y-1">
+                    {lojas.map(l => {
+                      const checked = rotaSel.includes(l.id);
+                      return (
+                        <label key={l.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                          <input type="checkbox" checked={checked} className="h-3.5 w-3.5 accent-primary"
+                            onChange={() => setRotaSel(prev => checked ? prev.filter(x => x !== l.id) : [...prev, l.id])} />
+                          <span>{l.nome} <span className="text-muted-foreground">· {l.cidade ?? "—"} {l.clientes?.nome ? `(${l.clientes.nome})` : ""}</span></span>
+                        </label>
+                      );
+                    })}
+                    {lojas.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Sem lojas cadastradas.</p>}
+                  </div>
+                </div>
+              )}
+
+              {tipoSel === "marca" && (
+                <div>
+                  <Label>Marcas atendidas ({marcasSel.length})</Label>
+                  <div className="max-h-44 overflow-y-auto rounded-md border border-input bg-background p-2 space-y-1">
+                    {marcas.map(m => {
+                      const checked = marcasSel.includes(m);
+                      return (
+                        <label key={m} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                          <input type="checkbox" checked={checked} className="h-3.5 w-3.5 accent-primary"
+                            onChange={() => setMarcasSel(prev => checked ? prev.filter(x => x !== m) : [...prev, m])} />
+                          <span>{m}</span>
+                        </label>
+                      );
+                    })}
+                    {marcas.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nenhuma marca cadastrada em produtos.</p>}
+                  </div>
+                </div>
+              )}
+
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="permite_dupla_diaria" defaultChecked={editing.permite_dupla_diaria} className="h-4 w-4 accent-primary" />
                 Permite dupla diária
