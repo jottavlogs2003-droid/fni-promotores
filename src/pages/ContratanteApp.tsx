@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText, Receipt, Loader2, Package, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import ValidadesView from "./admin/ValidadesView";
+import ExecucoesView from "./admin/ExecucoesView";
 import { MonitoramentoPanel } from "@/components/MonitoramentoPanel";
 import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
@@ -20,7 +20,6 @@ const items = [
   { to: "/app/lojas", label: "Lojas", icon: Store },
   { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
   { to: "/app/execucoes", label: "Execuções", icon: Camera },
-  { to: "/app/validades", label: "Validades", icon: Package },
   { to: "/app/faturas", label: "Faturas", icon: Receipt },
   { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
