@@ -227,22 +227,22 @@ export default function Landing() {
             </Button>
           </div>
 
-          {/* Demo credentials block */}
-          <div className="mt-16 pt-8 border-t border-white/10 max-w-2xl mx-auto">
-            <p className="text-xs tracking-[0.3em] text-white/50 mb-4">CONTAS DE DEMONSTRAÇÃO</p>
-            <div className="grid sm:grid-cols-3 gap-3 text-left">
+          {/* Diferenciais FNI */}
+          <div className="mt-16 pt-8 border-t border-white/10 max-w-3xl mx-auto">
+            <p className="text-xs tracking-[0.3em] text-white/50 mb-6">POR QUE FNI</p>
+            <div className="grid sm:grid-cols-3 gap-4 text-left">
               {[
-                { label: "Admin", email: "admin@fni.com" },
-                { label: "Contratante", email: "contratante@fni.com" },
-                { label: "Promotor", email: "promotor@fni.com" },
+                { n: "+10", l: "anos no varejo", d: "Operação de campo nas maiores redes do país." },
+                { n: "100%", l: "rastreável", d: "Cada minuto em loja, com GPS, foto e selfie." },
+                { n: "24/7", l: "tempo real", d: "Você acompanha a execução enquanto ela acontece." },
               ].map((c) => (
-                <div key={c.email} className="bg-white/5 border border-white/10 rounded-xl p-4">
-                  <p className="text-xs text-primary font-semibold tracking-wider">{c.label.toUpperCase()}</p>
-                  <p className="text-sm font-mono mt-1 truncate">{c.email}</p>
+                <div key={c.l} className="bg-white/5 border border-white/10 rounded-xl p-5">
+                  <p className="text-3xl font-display font-black text-gradient">{c.n}</p>
+                  <p className="text-xs text-primary font-semibold tracking-wider uppercase mt-1">{c.l}</p>
+                  <p className="text-sm text-white/70 mt-2 leading-relaxed">{c.d}</p>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-white/40 mt-3">Senha para todas: <span className="font-mono text-white/70">Fni@2026</span></p>
           </div>
         </div>
       </section>
