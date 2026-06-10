@@ -466,8 +466,11 @@ export function EscalaAdmin() {
       const nome = fd.get("nome") as string;
       const senha = (fd.get("senha") as string) || "Fni@2026";
       const valor_diaria = Number(fd.get("valor_diaria") || 0);
+      const tipo_promotor = (fd.get("tipo_promotor") as string) || null;
+      const chave_pix = (fd.get("chave_pix") as string) || null;
+      const cpf = (fd.get("cpf") as string) || null;
+      const fotoFile = (fd.get("foto") as File | null);
 
-      // signUp cria o usuário; trigger handle_new_user já cria profile + role promotor
       const redirectUrl = `${window.location.origin}/app`;
       const { data, error } = await supabase.auth.signUp({
         email, password: senha,
@@ -475,9 +478,21 @@ export function EscalaAdmin() {
       });
       if (error) throw error;
       if (data.user) {
+        const userId = data.user.id;
         const tel = (fd.get("telefone") as string) || null;
-        await supabase.from("profiles").update({ nome, telefone: tel }).eq("id", data.user.id);
-        await supabase.from("profiles_financeiro").upsert({ id: data.user.id, valor_diaria });
+        let avatar_url: string | null = null;
+        if (fotoFile && fotoFile.size > 0) {
+          const ext = (fotoFile.name.split(".").pop() || "jpg").toLowerCase();
+          const path = `${userId}/avatar.${ext}`;
+          const { error: upErr } = await supabase.storage.from("avatars").upload(path, fotoFile, { upsert: true, contentType: fotoFile.type });
+          if (upErr) toast.error("Foto: " + upErr.message);
+          else {
+            const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+            avatar_url = pub.publicUrl;
+          }
+        }
+        await supabase.from("profiles").update({ nome, telefone: tel, tipo_promotor, avatar_url }).eq("id", userId);
+        await supabase.from("profiles_financeiro").upsert({ id: userId, valor_diaria, chave_pix, cpf, forma_pagamento: chave_pix ? "pix" : null });
       }
       toast.success(`Promotor "${nome}" cadastrado!`);
       setOpenProm(false); loadPromotores();
@@ -500,7 +515,7 @@ export function EscalaAdmin() {
         <div className="flex gap-2 flex-wrap">
           <Dialog open={openProm} onOpenChange={setOpenProm}>
             <DialogTrigger asChild><Button variant="outline"><Plus className="h-4 w-4" /> Adicionar promotor</Button></DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Cadastrar novo promotor</DialogTitle></DialogHeader>
               <form onSubmit={criarPromotor} className="space-y-3">
                 <div><Label>Nome completo</Label><Input name="nome" required /></div>
@@ -509,10 +524,24 @@ export function EscalaAdmin() {
                   <div><Label>Telefone</Label><Input name="telefone" /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
+                  <div><Label>CPF</Label><Input name="cpf" /></div>
                   <div><Label>Senha inicial</Label><Input name="senha" defaultValue="Fni@2026" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Tipo de promotor</Label>
+                    <select name="tipo_promotor" className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                      <option value="">—</option>
+                      <option value="rota_fixa">Rota fixa (várias lojas)</option>
+                      <option value="loja_fixa">Loja fixa (uma loja)</option>
+                      <option value="marca">Por marca</option>
+                      <option value="rotativo">Rotativo</option>
+                    </select>
+                  </div>
                   <div><Label>Valor da diária (R$)</Label><Input name="valor_diaria" type="number" step="0.01" defaultValue="100" /></div>
                 </div>
-                <p className="text-xs text-foreground/70">Conta criada como promotor. Demais dados (PIX, jornada) podem ser ajustados em "Promotores".</p>
+                <div><Label>Chave PIX</Label><Input name="chave_pix" placeholder="CPF, email, telefone ou chave aleatória" /></div>
+                <div><Label>Foto do promotor</Label><Input name="foto" type="file" accept="image/*" /></div>
+                <p className="text-xs text-foreground/70">Rotas/marcas e ajustes adicionais podem ser editados em "Promotores".</p>
                 <Button type="submit" disabled={busy} variant="brand" className="w-full">
                   {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Cadastrar
                 </Button>

@@ -364,6 +364,18 @@ function PromotoresAdmin() {
       marcas_atendidas: tipoSel === "marca" ? marcasSel : [],
       rota_lojas: tipoSel === "rota_fixa" ? rotaSel : [],
     };
+    // upload de foto (opcional)
+    const fotoFile = fd.get("foto") as File | null;
+    if (fotoFile && fotoFile.size > 0) {
+      const ext = (fotoFile.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${editing.id}/avatar.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, fotoFile, { upsert: true, contentType: fotoFile.type });
+      if (upErr) toast.error("Foto: " + upErr.message);
+      else {
+        const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+        perfilPayload.avatar_url = `${pub.publicUrl}?t=${Date.now()}`;
+      }
+    }
     const finPayload: any = {
       id: editing.id,
       cpf: fd.get("cpf") || null,
@@ -433,6 +445,19 @@ function PromotoresAdmin() {
           <DialogHeader><DialogTitle>Editar promotor: {editing?.nome}</DialogTitle></DialogHeader>
           {editing && (
             <form onSubmit={saveFinanceiro} className="space-y-3">
+              <div className="flex items-center gap-3">
+                {editing.avatar_url ? (
+                  <img src={editing.avatar_url} alt="foto" className="h-16 w-16 rounded-full object-cover border border-border" />
+                ) : (
+                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold text-muted-foreground">
+                    {editing.nome?.[0] ?? "?"}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Label>Foto do promotor</Label>
+                  <Input name="foto" type="file" accept="image/*" />
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><Label>CPF</Label><Input name="cpf" defaultValue={editing.cpf ?? ""} /></div>
                 <div><Label>Telefone</Label><Input name="telefone" defaultValue={editing.telefone ?? ""} /></div>
