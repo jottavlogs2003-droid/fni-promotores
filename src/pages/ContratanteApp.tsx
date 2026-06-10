@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { LayoutDashboard, Store, Camera, Users, AlertTriangle, FileText, Receipt, Loader2, Package, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import ValidadesView from "./admin/ValidadesView";
+import ExecucoesView from "./admin/ExecucoesView";
 import { MonitoramentoPanel } from "@/components/MonitoramentoPanel";
 import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
@@ -20,7 +20,6 @@ const items = [
   { to: "/app/lojas", label: "Lojas", icon: Store },
   { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
   { to: "/app/execucoes", label: "Execuções", icon: Camera },
-  { to: "/app/validades", label: "Validades", icon: Package },
   { to: "/app/faturas", label: "Faturas", icon: Receipt },
   { to: "/app/relatorios", label: "Relatórios", icon: FileText },
 ];
@@ -320,9 +319,9 @@ export default function ContratanteApp() {
       <Routes>
         <Route index element={<ContratanteDashboard />} />
         <Route path="lojas" element={<GenericTable title="Suas lojas" table="lojas" columns={[{ key: "nome", label: "Nome" }, { key: "cidade", label: "Cidade" }, { key: "estado", label: "UF" }]} />} />
-        <Route path="execucoes" element={<GenericTable title="Execuções" table="execucoes" columns={[{ key: "loja", label: "Loja" }, { key: "score", label: "Score" }, { key: "observacoes", label: "Observações" }, { key: "created_at", label: "Quando" }]} />} />
-        <Route path="rupturas" element={<Navigate to="/app/validades" replace />} />
-        <Route path="validades" element={<ValidadesView clienteId={profile?.cliente_id} />} />
+        <Route path="execucoes" element={<ExecucoesView clienteId={profile?.cliente_id} />} />
+        <Route path="rupturas" element={<Navigate to="/app/execucoes" replace />} />
+        <Route path="validades" element={<Navigate to="/app/execucoes" replace />} />
         <Route path="faturas" element={<MinhasFaturas />} />
         <Route path="relatorios" element={<RelatoriosContratante />} />
         <Route path="monitoramento" element={<MonitoramentoPanel clienteId={profile?.cliente_id ?? null} />} />

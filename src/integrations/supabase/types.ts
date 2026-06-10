@@ -744,7 +744,9 @@ export type Database = {
           id: string
           jornada_horas: number | null
           loja_fixa_id: string | null
+          marcas_atendidas: string[] | null
           nome: string
+          rota_lojas: string[] | null
           telefone: string | null
           tipo_promotor: string | null
           updated_at: string
@@ -758,7 +760,9 @@ export type Database = {
           id: string
           jornada_horas?: number | null
           loja_fixa_id?: string | null
+          marcas_atendidas?: string[] | null
           nome: string
+          rota_lojas?: string[] | null
           telefone?: string | null
           tipo_promotor?: string | null
           updated_at?: string
@@ -772,7 +776,9 @@ export type Database = {
           id?: string
           jornada_horas?: number | null
           loja_fixa_id?: string | null
+          marcas_atendidas?: string[] | null
           nome?: string
+          rota_lojas?: string[] | null
           telefone?: string | null
           tipo_promotor?: string | null
           updated_at?: string

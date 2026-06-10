@@ -8,36 +8,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, Users, Building2, Store, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Map as MapIcon, Settings, UserCheck } from "lucide-react";
+import { LayoutDashboard, Users, Building2, Package, Megaphone, MapPin, FileText, Plus, Loader2, Calendar, DollarSign, Wand2, Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EscalaAdmin } from "./admin/FinanceiroAdmin";
 import GeradorEscala from "./admin/GeradorEscala";
-import MapaAoVivo from "./admin/MapaAoVivo";
 import FinanceiroHub from "./admin/FinanceiroHub";
 import ConfigAdmin from "./admin/ConfigAdmin";
-import ValidadesView from "./admin/ValidadesView";
-import ClientesAdmin from "./admin/ClientesAdmin";
-import RelatoriosPromotores from "./admin/RelatoriosPromotores";
-import LojasAdmin from "./admin/LojasAdmin";
+import ExecucoesView from "./admin/ExecucoesView";
+import ClientesLojasAdmin from "./admin/ClientesLojasAdmin";
 import { MonitoramentoPanel } from "@/components/MonitoramentoPanel";
 import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/app/mapa", label: "Mapa ao vivo", icon: MapIcon },
+  { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
   { to: "/app/escala", label: "Escala", icon: Calendar },
   { to: "/app/escala-auto", label: "Gerar escala", icon: Wand2 },
   { to: "/app/promotores", label: "Promotores", icon: Users },
-  { to: "/app/rel-promotores", label: "Rel. Promotores", icon: UserCheck },
-  { to: "/app/clientes", label: "Clientes", icon: Building2 },
-  { to: "/app/lojas", label: "Lojas", icon: Store },
+  { to: "/app/clientes-lojas", label: "Clientes & Lojas", icon: Building2 },
   { to: "/app/campanhas", label: "Campanhas", icon: Megaphone },
   { to: "/app/financeiro", label: "Financeiro", icon: DollarSign },
-  { to: "/app/validades", label: "Validades", icon: Package },
-  { to: "/app/monitoramento", label: "Monitoramento", icon: MapPin },
+  { to: "/app/execucoes", label: "Execuções", icon: Package },
   { to: "/app/config", label: "Configurações", icon: Settings },
 ];
+
 
 function AdminDashboard() {
   const [stats, setStats] = useState({ promotores: 0, lojas: 0, checkInsHoje: 0, rupturas: 0, validades: 0, campanhas: 0 });
@@ -51,7 +46,7 @@ function AdminDashboard() {
       supabase.from("lojas").select("id", { count: "exact", head: true }).eq("ativo", true),
       supabase.from("check_ins").select("id", { count: "exact", head: true }).gte("hora_entrada", today.toISOString()),
       supabase.from("rupturas").select("id", { count: "exact", head: true }).eq("status", "aberta"),
-      supabase.from("validades").select("id", { count: "exact", head: true }),
+      supabase.from("execucoes").select("id", { count: "exact", head: true }),
       supabase.from("campanhas").select("id", { count: "exact", head: true }).eq("status", "ativa"),
       supabase.from("check_ins").select("*, lojas(nome), profiles!check_ins_promotor_id_fkey(nome)").order("hora_entrada", { ascending: false }).limit(8),
       supabase.from("resumo_financeiro_mensal").select("*").limit(1).maybeSingle(),
@@ -81,10 +76,10 @@ function AdminDashboard() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard label="Promotores" value={stats.promotores} icon={Users} variant="primary" />
-        <StatCard label="Lojas ativas" value={stats.lojas} icon={Store} variant="secondary" />
+        <StatCard label="Lojas ativas" value={stats.lojas} icon={Building2} variant="secondary" />
         <StatCard label="Check-ins hoje" value={stats.checkInsHoje} icon={MapPin} variant="success" />
         <StatCard label="Rupturas abertas" value={stats.rupturas} icon={Package} variant="warning" />
-        <StatCard label="Validades" value={stats.validades} icon={FileText} variant="primary" />
+        <StatCard label="Execuções" value={stats.validades} icon={FileText} variant="primary" />
         <StatCard label="Campanhas ativas" value={stats.campanhas} icon={Megaphone} variant="secondary" />
       </div>
 
@@ -317,19 +312,39 @@ function PromotoresAdmin() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [editing, setEditing] = useState<any>(null);
   const [busy, setBusy] = useState(false);
+  const [lojas, setLojas] = useState<any[]>([]);
+  const [marcas, setMarcas] = useState<string[]>([]);
+  const [tipoSel, setTipoSel] = useState<string>("");
+  const [marcasSel, setMarcasSel] = useState<string[]>([]);
+  const [rotaSel, setRotaSel] = useState<string[]>([]);
+  const [lojaFixaSel, setLojaFixaSel] = useState<string>("");
 
   async function load() {
-    const [{ data: profs }, { data: rolesData }, { data: finData }] = await Promise.all([
+    const [{ data: profs }, { data: rolesData }, { data: finData }, { data: lj }, { data: pr }] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("profiles_financeiro").select("*"),
+      supabase.from("lojas").select("id, nome, cidade, cliente_id, clientes(nome)").eq("ativo", true).order("nome"),
+      supabase.from("produtos").select("marca").not("marca", "is", null),
     ]);
     const byUser = new Map<string, string>();
     (rolesData ?? []).forEach((r: any) => byUser.set(r.user_id, r.role));
     const finMap = new Map((finData ?? []).map((f: any) => [f.id, f]));
     setProfiles((profs ?? []).map((p: any) => ({ ...p, ...(finMap.get(p.id) ?? {}), role: byUser.get(p.id) ?? null })));
+    setLojas(lj ?? []);
+    const setMarcas2 = new Set<string>();
+    (pr ?? []).forEach((p: any) => p.marca && setMarcas2.add(p.marca));
+    setMarcas([...setMarcas2].sort());
   }
   useEffect(() => { load(); }, []);
+
+  function openEdit(p: any) {
+    setEditing(p);
+    setTipoSel(p.tipo_promotor ?? "");
+    setMarcasSel(p.marcas_atendidas ?? []);
+    setRotaSel(p.rota_lojas ?? []);
+    setLojaFixaSel(p.loja_fixa_id ?? "");
+  }
 
   async function setRole(userId: string, role: "admin" | "contratante" | "promotor") {
     await supabase.from("user_roles").delete().eq("user_id", userId);
@@ -343,8 +358,11 @@ function PromotoresAdmin() {
     const fd = new FormData(e.currentTarget);
     const perfilPayload: any = {
       telefone: fd.get("telefone") || null,
-      tipo_promotor: fd.get("tipo_promotor") || null,
+      tipo_promotor: tipoSel || null,
       jornada_horas: fd.get("jornada_horas") ? Number(fd.get("jornada_horas")) : null,
+      loja_fixa_id: tipoSel === "loja_fixa" ? (lojaFixaSel || null) : null,
+      marcas_atendidas: tipoSel === "marca" ? marcasSel : [],
+      rota_lojas: tipoSel === "rota_fixa" ? rotaSel : [],
     };
     const finPayload: any = {
       id: editing.id,
@@ -386,12 +404,19 @@ function PromotoresAdmin() {
                 <tr key={p.id} className="border-b border-border last:border-0 hover:bg-card/40">
                   <td className="p-3 font-medium">{p.nome}</td>
                   <td className="p-3 text-xs">{p.email}</td>
-                  <td className="p-3 text-xs">{p.tipo_promotor ?? "—"} · {p.jornada_horas ?? "—"}h</td>
+                  <td className="p-3 text-xs">
+                    <Badge className="bg-primary/10 text-primary border-primary/30">{(p.tipo_promotor ?? "—").replace("_"," ")}</Badge>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      {p.tipo_promotor === "marca" && p.marcas_atendidas?.length ? `Marcas: ${p.marcas_atendidas.join(", ")}` : null}
+                      {p.tipo_promotor === "rota_fixa" && p.rota_lojas?.length ? `${p.rota_lojas.length} loja(s) na rota` : null}
+                      {p.jornada_horas ? ` · ${p.jornada_horas}h` : ""}
+                    </div>
+                  </td>
                   <td className="p-3 text-right">{p.valor_diaria ? Number(p.valor_diaria).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}</td>
-                  <td className="p-3 text-xs">{p.forma_pagamento ?? "—"}</td>
+                  <td className="p-3 text-xs">{p.forma_pagamento ?? "—"}{p.chave_pix ? <div className="text-[10px] text-muted-foreground truncate max-w-[140px]" title={p.chave_pix}>PIX: {p.chave_pix}</div> : null}</td>
                   <td className="p-3"><Badge>{p.role ?? "—"}</Badge></td>
                   <td className="p-3 flex flex-wrap gap-1">
-                    <Button size="sm" variant="outline" onClick={() => setEditing(p)}>Editar dados</Button>
+                    <Button size="sm" variant="outline" onClick={() => openEdit(p)}>Editar dados</Button>
                     <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "admin")}>A</Button>
                     <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "contratante")}>C</Button>
                     <Button size="sm" variant="ghost" onClick={() => setRole(p.id, "promotor")}>P</Button>
@@ -413,9 +438,13 @@ function PromotoresAdmin() {
                 <div><Label>Telefone</Label><Input name="telefone" defaultValue={editing.telefone ?? ""} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>Tipo</Label>
-                  <select name="tipo_promotor" defaultValue={editing.tipo_promotor ?? ""} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                    <option value="">—</option><option value="fixo">Fixo</option><option value="rotativo">Rotativo</option>
+                <div><Label>Tipo de promotor</Label>
+                  <select value={tipoSel} onChange={e => setTipoSel(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">—</option>
+                    <option value="rota_fixa">Rota fixa (várias lojas)</option>
+                    <option value="loja_fixa">Loja fixa (uma loja)</option>
+                    <option value="marca">Por marca</option>
+                    <option value="rotativo">Rotativo</option>
                   </select>
                 </div>
                 <div><Label>Jornada (h)</Label>
@@ -424,6 +453,54 @@ function PromotoresAdmin() {
                   </select>
                 </div>
               </div>
+
+              {tipoSel === "loja_fixa" && (
+                <div><Label>Loja fixa</Label>
+                  <select value={lojaFixaSel} onChange={e => setLojaFixaSel(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="">Selecione…</option>
+                    {lojas.map(l => <option key={l.id} value={l.id}>{l.nome} {l.cidade ? `· ${l.cidade}` : ""} {l.clientes?.nome ? `(${l.clientes.nome})` : ""}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {tipoSel === "rota_fixa" && (
+                <div>
+                  <Label>Lojas da rota ({rotaSel.length})</Label>
+                  <div className="max-h-44 overflow-y-auto rounded-md border border-input bg-background p-2 space-y-1">
+                    {lojas.map(l => {
+                      const checked = rotaSel.includes(l.id);
+                      return (
+                        <label key={l.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                          <input type="checkbox" checked={checked} className="h-3.5 w-3.5 accent-primary"
+                            onChange={() => setRotaSel(prev => checked ? prev.filter(x => x !== l.id) : [...prev, l.id])} />
+                          <span>{l.nome} <span className="text-muted-foreground">· {l.cidade ?? "—"} {l.clientes?.nome ? `(${l.clientes.nome})` : ""}</span></span>
+                        </label>
+                      );
+                    })}
+                    {lojas.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Sem lojas cadastradas.</p>}
+                  </div>
+                </div>
+              )}
+
+              {tipoSel === "marca" && (
+                <div>
+                  <Label>Marcas atendidas ({marcasSel.length})</Label>
+                  <div className="max-h-44 overflow-y-auto rounded-md border border-input bg-background p-2 space-y-1">
+                    {marcas.map(m => {
+                      const checked = marcasSel.includes(m);
+                      return (
+                        <label key={m} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
+                          <input type="checkbox" checked={checked} className="h-3.5 w-3.5 accent-primary"
+                            onChange={() => setMarcasSel(prev => checked ? prev.filter(x => x !== m) : [...prev, m])} />
+                          <span>{m}</span>
+                        </label>
+                      );
+                    })}
+                    {marcas.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nenhuma marca cadastrada em produtos.</p>}
+                  </div>
+                </div>
+              )}
+
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="permite_dupla_diaria" defaultChecked={editing.permite_dupla_diaria} className="h-4 w-4 accent-primary" />
                 Permite dupla diária
@@ -455,14 +532,16 @@ export default function AdminApp() {
       <Routes>
         <Route index element={<AdminDashboard />} />
         <Route path="promotores" element={<PromotoresAdmin />} />
-        <Route path="clientes" element={<ClientesAdmin />} />
-        <Route path="rel-promotores" element={<RelatoriosPromotores />} />
+        <Route path="clientes-lojas" element={<ClientesLojasAdmin />} />
+        <Route path="clientes" element={<Navigate to="/app/clientes-lojas" replace />} />
+        <Route path="lojas" element={<Navigate to="/app/clientes-lojas" replace />} />
+        <Route path="rel-promotores" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="financeiro" element={<FinanceiroHub />} />
         <Route path="escala" element={<EscalaAdmin />} />
         <Route path="escala-auto" element={<GeradorEscala />} />
-        <Route path="lojas" element={<LojasAdmin />} />
-        <Route path="produtos" element={<Navigate to="/app/validades" replace />} />
-        <Route path="validades" element={<ValidadesView />} />
+        <Route path="produtos" element={<Navigate to="/app/execucoes" replace />} />
+        <Route path="validades" element={<Navigate to="/app/execucoes" replace />} />
+        <Route path="execucoes" element={<ExecucoesView />} />
         <Route path="campanhas" element={
           <CrudList title="Campanhas" table="campanhas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "data_inicio", label: "Início" }, { key: "data_fim", label: "Fim" }, { key: "status", label: "Status" }]}
@@ -476,13 +555,14 @@ export default function AdminApp() {
             ]} />
         } />
         <Route path="monitoramento" element={<MonitoramentoPanel />} />
-        <Route path="mapa" element={<MapaAoVivo />} />
+        <Route path="mapa" element={<Navigate to="/app/monitoramento" replace />} />
         <Route path="config" element={<ConfigAdmin />} />
         <Route path="auditoria" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="relatorios" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="pagamentos" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="faturas" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
+
       </Routes>
     </DesktopLayout>
   );
