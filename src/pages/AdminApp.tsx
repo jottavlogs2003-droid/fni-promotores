@@ -450,14 +450,16 @@ export default function AdminApp() {
       <Routes>
         <Route index element={<AdminDashboard />} />
         <Route path="promotores" element={<PromotoresAdmin />} />
-        <Route path="clientes" element={<ClientesAdmin />} />
-        <Route path="rel-promotores" element={<RelatoriosPromotores />} />
+        <Route path="clientes-lojas" element={<ClientesLojasAdmin />} />
+        <Route path="clientes" element={<Navigate to="/app/clientes-lojas" replace />} />
+        <Route path="lojas" element={<Navigate to="/app/clientes-lojas" replace />} />
+        <Route path="rel-promotores" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="financeiro" element={<FinanceiroHub />} />
         <Route path="escala" element={<EscalaAdmin />} />
         <Route path="escala-auto" element={<GeradorEscala />} />
-        <Route path="lojas" element={<LojasAdmin />} />
-        <Route path="produtos" element={<Navigate to="/app/validades" replace />} />
-        <Route path="validades" element={<ValidadesView />} />
+        <Route path="produtos" element={<Navigate to="/app/execucoes" replace />} />
+        <Route path="validades" element={<Navigate to="/app/execucoes" replace />} />
+        <Route path="execucoes" element={<ExecucoesView />} />
         <Route path="campanhas" element={
           <CrudList title="Campanhas" table="campanhas" parentField="cliente_id"
             columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "data_inicio", label: "Início" }, { key: "data_fim", label: "Fim" }, { key: "status", label: "Status" }]}
@@ -471,13 +473,14 @@ export default function AdminApp() {
             ]} />
         } />
         <Route path="monitoramento" element={<MonitoramentoPanel />} />
-        <Route path="mapa" element={<MapaAoVivo />} />
+        <Route path="mapa" element={<Navigate to="/app/monitoramento" replace />} />
         <Route path="config" element={<ConfigAdmin />} />
         <Route path="auditoria" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="relatorios" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="pagamentos" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="faturas" element={<Navigate to="/app/financeiro" replace />} />
         <Route path="*" element={<Navigate to="/app" replace />} />
+
       </Routes>
     </DesktopLayout>
   );
