@@ -312,19 +312,39 @@ function PromotoresAdmin() {
   const [profiles, setProfiles] = useState<any[]>([]);
   const [editing, setEditing] = useState<any>(null);
   const [busy, setBusy] = useState(false);
+  const [lojas, setLojas] = useState<any[]>([]);
+  const [marcas, setMarcas] = useState<string[]>([]);
+  const [tipoSel, setTipoSel] = useState<string>("");
+  const [marcasSel, setMarcasSel] = useState<string[]>([]);
+  const [rotaSel, setRotaSel] = useState<string[]>([]);
+  const [lojaFixaSel, setLojaFixaSel] = useState<string>("");
 
   async function load() {
-    const [{ data: profs }, { data: rolesData }, { data: finData }] = await Promise.all([
+    const [{ data: profs }, { data: rolesData }, { data: finData }, { data: lj }, { data: pr }] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("profiles_financeiro").select("*"),
+      supabase.from("lojas").select("id, nome, cidade, cliente_id, clientes(nome)").eq("ativo", true).order("nome"),
+      supabase.from("produtos").select("marca").not("marca", "is", null),
     ]);
     const byUser = new Map<string, string>();
     (rolesData ?? []).forEach((r: any) => byUser.set(r.user_id, r.role));
     const finMap = new Map((finData ?? []).map((f: any) => [f.id, f]));
     setProfiles((profs ?? []).map((p: any) => ({ ...p, ...(finMap.get(p.id) ?? {}), role: byUser.get(p.id) ?? null })));
+    setLojas(lj ?? []);
+    const setMarcas2 = new Set<string>();
+    (pr ?? []).forEach((p: any) => p.marca && setMarcas2.add(p.marca));
+    setMarcas([...setMarcas2].sort());
   }
   useEffect(() => { load(); }, []);
+
+  function openEdit(p: any) {
+    setEditing(p);
+    setTipoSel(p.tipo_promotor ?? "");
+    setMarcasSel(p.marcas_atendidas ?? []);
+    setRotaSel(p.rota_lojas ?? []);
+    setLojaFixaSel(p.loja_fixa_id ?? "");
+  }
 
   async function setRole(userId: string, role: "admin" | "contratante" | "promotor") {
     await supabase.from("user_roles").delete().eq("user_id", userId);
@@ -338,8 +358,11 @@ function PromotoresAdmin() {
     const fd = new FormData(e.currentTarget);
     const perfilPayload: any = {
       telefone: fd.get("telefone") || null,
-      tipo_promotor: fd.get("tipo_promotor") || null,
+      tipo_promotor: tipoSel || null,
       jornada_horas: fd.get("jornada_horas") ? Number(fd.get("jornada_horas")) : null,
+      loja_fixa_id: tipoSel === "loja_fixa" ? (lojaFixaSel || null) : null,
+      marcas_atendidas: tipoSel === "marca" ? marcasSel : [],
+      rota_lojas: tipoSel === "rota_fixa" ? rotaSel : [],
     };
     const finPayload: any = {
       id: editing.id,
