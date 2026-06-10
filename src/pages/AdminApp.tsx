@@ -364,6 +364,18 @@ function PromotoresAdmin() {
       marcas_atendidas: tipoSel === "marca" ? marcasSel : [],
       rota_lojas: tipoSel === "rota_fixa" ? rotaSel : [],
     };
+    // upload de foto (opcional)
+    const fotoFile = fd.get("foto") as File | null;
+    if (fotoFile && fotoFile.size > 0) {
+      const ext = (fotoFile.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${editing.id}/avatar.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, fotoFile, { upsert: true, contentType: fotoFile.type });
+      if (upErr) toast.error("Foto: " + upErr.message);
+      else {
+        const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+        perfilPayload.avatar_url = `${pub.publicUrl}?t=${Date.now()}`;
+      }
+    }
     const finPayload: any = {
       id: editing.id,
       cpf: fd.get("cpf") || null,
