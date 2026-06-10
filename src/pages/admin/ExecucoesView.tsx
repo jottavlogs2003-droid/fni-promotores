@@ -103,15 +103,16 @@ export default function ExecucoesView({ clienteId }: { clienteId?: string | null
                 <th className="text-left p-3">Cliente</th>
                 <th className="text-left p-3">Loja</th>
                 <th className="text-left p-3">Cidade/UF</th>
-                <th className="text-left p-3">Tempo em loja</th>
+                <th className="text-left p-3">Tempo</th>
                 <th className="text-center p-3">Checklist</th>
                 <th className="text-center p-3">Score</th>
+                <th className="text-left p-3">Fotos</th>
                 <th className="p-3"></th>
               </tr>
             </thead>
             <tbody>
-              {loading ? <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Carregando...</td></tr>
-              : visiveis.length === 0 ? <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Nenhuma execução no período.</td></tr>
+              {loading ? <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Carregando...</td></tr>
+              : visiveis.length === 0 ? <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Nenhuma execução no período.</td></tr>
               : visiveis.map(r => {
                 const ci = r.check_ins;
                 const dur = ci?.hora_entrada && ci?.hora_saida
@@ -119,11 +120,18 @@ export default function ExecucoesView({ clienteId }: { clienteId?: string | null
                   : null;
                 const checks = [r.loja_organizada, r.produto_exposto, r.preco_visivel, r.material_merchandising];
                 const ok = checks.filter(Boolean).length;
+                const fotosRow = r.fotos_execucao ?? [];
                 return (
                   <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30">
                     <td className="p-3 text-xs">{new Date(r.created_at).toLocaleString("pt-BR")}</td>
-                    <td className="p-3 font-medium">{r.profiles?.nome ?? "—"}
-                      {r.profiles?.tipo_promotor && <div className="text-[10px] text-muted-foreground uppercase">{r.profiles.tipo_promotor.replace("_"," ")}</div>}
+                    <td className="p-3 font-medium">
+                      <div className="flex items-center gap-2">
+                        {r.profiles?.avatar_url && <img src={r.profiles.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover" />}
+                        <div>
+                          {r.profiles?.nome ?? "—"}
+                          {r.profiles?.tipo_promotor && <div className="text-[10px] text-muted-foreground uppercase">{r.profiles.tipo_promotor.replace("_"," ")}</div>}
+                        </div>
+                      </div>
                     </td>
                     <td className="p-3 text-xs">{r.lojas?.clientes?.nome ?? "—"}</td>
                     <td className="p-3">{r.lojas?.nome ?? "—"}</td>
@@ -131,6 +139,16 @@ export default function ExecucoesView({ clienteId }: { clienteId?: string | null
                     <td className="p-3 text-xs">{dur != null ? `${dur} min` : ci?.hora_entrada ? "Em loja" : "—"}</td>
                     <td className="p-3 text-center text-xs">{ok}/4</td>
                     <td className="p-3 text-center">{scoreBadge(r.score)}</td>
+                    <td className="p-3">
+                      {fotosRow.length === 0 ? <span className="text-xs text-muted-foreground">—</span> : (
+                        <div className="flex -space-x-2">
+                          {fotosRow.slice(0, 3).map((f: any) => (
+                            <img key={f.id} src={f.url} alt="" className="h-8 w-8 rounded object-cover border-2 border-background cursor-pointer" onClick={() => openDetalhe(r)} />
+                          ))}
+                          {fotosRow.length > 3 && <span className="text-[10px] bg-muted text-muted-foreground h-8 w-8 rounded border-2 border-background flex items-center justify-center">+{fotosRow.length - 3}</span>}
+                        </div>
+                      )}
+                    </td>
                     <td className="p-3 text-right">
                       <Button size="sm" variant="outline" onClick={() => openDetalhe(r)}>Ver</Button>
                     </td>
