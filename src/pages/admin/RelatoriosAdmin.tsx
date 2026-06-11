@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RelatoriosAdmin() {
-  const [tipo, setTipo] = useState<"loja" | "promotor" | "cliente" | "detalhado">("loja");
+  const [tipo, setTipo] = useState<"loja" | "promotor" | "cliente" | "marca" | "detalhado">("loja");
   const [inicio, setInicio] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0,10); });
   const [fim, setFim] = useState(() => new Date().toISOString().slice(0,10));
   const [busy, setBusy] = useState(false);
@@ -35,7 +35,7 @@ export default function RelatoriosAdmin() {
 
   async function carregarDados() {
     let q = supabase.from("escalas")
-      .select("*, profiles!escalas_promotor_id_fkey(nome), lojas!inner(nome, cidade, cliente_id, clientes(nome, valor_diaria_cobrada))")
+      .select("*, profiles!escalas_promotor_id_fkey(nome), lojas!inner(nome, cidade, cliente_id, clientes(nome, valor_diaria_cobrada, marcas, tipo_atendimento))")
       .gte("data", inicio).lte("data", fim);
     if (filtroLoja) q = q.eq("loja_id", filtroLoja);
     if (filtroPromotor) q = q.eq("promotor_id", filtroPromotor);
@@ -71,17 +71,22 @@ export default function RelatoriosAdmin() {
     }
     const map = new Map<string, any>();
     rows.forEach(r => {
-      let chave = ""; let extra: any = {};
-      if (tipo === "loja") { chave = r.lojas?.nome ?? "—"; extra = { Cliente: r.lojas?.clientes?.nome ?? "—", Cidade: r.lojas?.cidade ?? "—" }; }
-      else if (tipo === "promotor") { chave = r.profiles?.nome ?? "—"; }
-      else { chave = r.lojas?.clientes?.nome ?? "—"; }
-      const cur: any = map.get(chave) ?? { [tipo === "loja" ? "Loja" : tipo === "promotor" ? "Promotor" : "Cliente"]: chave, ...extra, Turnos: 0, Horas: 0, Diarias: 0, Custo: 0, Receita: 0 };
-      cur.Turnos += 1;
-      cur.Horas += Number(r.duracao_horas);
-      cur.Diarias += Number(r.diarias);
-      cur.Custo += Number(r.diarias) * Number(r.profiles?.valor_diaria ?? 0);
-      cur.Receita += Number(r.diarias) * Number(r.lojas?.clientes?.valor_diaria_cobrada ?? 0);
-      map.set(chave, cur);
+      const custo = Number(r.diarias) * Number(r.profiles?.valor_diaria ?? 0);
+      const receita = Number(r.diarias) * Number(r.lojas?.clientes?.valor_diaria_cobrada ?? 0);
+      const baseAdd = (chave: string, label: string, extra: any = {}) => {
+        const cur: any = map.get(chave) ?? { [label]: chave, ...extra, Turnos: 0, Horas: 0, Diarias: 0, Custo: 0, Receita: 0 };
+        cur.Turnos += 1; cur.Horas += Number(r.duracao_horas); cur.Diarias += Number(r.diarias);
+        cur.Custo += custo; cur.Receita += receita;
+        map.set(chave, cur);
+      };
+      if (tipo === "loja") baseAdd(r.lojas?.nome ?? "—", "Loja", { Cliente: r.lojas?.clientes?.nome ?? "—", Cidade: r.lojas?.cidade ?? "—" });
+      else if (tipo === "promotor") baseAdd(r.profiles?.nome ?? "—", "Promotor");
+      else if (tipo === "cliente") baseAdd(r.lojas?.clientes?.nome ?? "—", "Cliente");
+      else if (tipo === "marca") {
+        const marcas: string[] = r.lojas?.clientes?.marcas ?? [];
+        if (marcas.length === 0) baseAdd("(sem marca)", "Marca", { Cliente: r.lojas?.clientes?.nome ?? "—" });
+        else marcas.forEach(m => baseAdd(m, "Marca", { Cliente: r.lojas?.clientes?.nome ?? "—" }));
+      }
     });
     return Array.from(map.values()).map((x: any) => ({ ...x, Lucro: x.Receita - x.Custo }));
   }
@@ -135,6 +140,7 @@ export default function RelatoriosAdmin() {
 
   const opcoes = [
     { v: "loja", t: "Por loja", d: "Total de turnos, diárias, custo e receita por loja" },
+    { v: "marca", t: "Por marca", d: "Consolidado por marca (clientes do tipo marca)" },
     { v: "promotor", t: "Por promotor", d: "Performance individual e valor a pagar" },
     { v: "cliente", t: "Por cliente", d: "Visão consolidada por contratante" },
     { v: "detalhado", t: "Detalhado", d: "Cada turno: cliente → loja → promotor (linha por linha)" },
