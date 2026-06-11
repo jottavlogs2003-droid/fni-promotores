@@ -9,7 +9,6 @@ import { Home, MapPin, Camera, ListChecks, Calendar, AlertTriangle, ChevronRight
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
 import { LiveCamera } from "@/components/LiveCamera";
-import ProdutosPromotor from "./promotor/ProdutosPromotor";
 import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
 
 const items = [
@@ -17,7 +16,6 @@ const items = [
   { to: "/app/agenda", label: "Agenda", icon: Calendar },
   { to: "/app/checkin", label: "Check-in", icon: MapPin },
   { to: "/app/execucao", label: "Execução", icon: ListChecks },
-  { to: "/app/produtos", label: "Produtos", icon: Package },
   { to: "/app/pagamentos", label: "Pagto", icon: Wallet },
 ];
 
