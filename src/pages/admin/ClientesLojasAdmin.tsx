@@ -212,9 +212,9 @@ function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: {
     const coords = parseLatLng(link);
     if (!coords) { toast.error("Cole um link do Google Maps válido."); return; }
     setBusy(true);
-    const { error } = await supabase.from("lojas").insert({
+    const { error } = await (supabase as any).from("lojas").insert({
       cliente_id: target.id,
-      nome: fd.get("nome"),
+      nome: String(fd.get("nome") ?? ""),
       endereco: fd.get("endereco") || null,
       cidade: fd.get("cidade") || null,
       estado: fd.get("estado") || null,
