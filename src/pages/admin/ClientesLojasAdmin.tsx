@@ -174,10 +174,10 @@ function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: {
 
     let salvo: Cliente | null = target;
     if (target?.id) {
-      const { error } = await supabase.from("clientes").update(payload).eq("id", target.id);
+      const { error } = await (supabase as any).from("clientes").update(payload).eq("id", target.id);
       if (error) { setBusy(false); toast.error(error.message); return; }
     } else {
-      const { data, error } = await supabase.from("clientes").insert(payload).select().single();
+      const { data, error } = await (supabase as any).from("clientes").insert(payload).select().single();
       if (error) { setBusy(false); toast.error(error.message); return; }
       salvo = data;
       // opcional: criar login
