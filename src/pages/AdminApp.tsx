@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Routes, Route, Navigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { DesktopLayout } from "@/components/layouts/DesktopLayout";
@@ -12,13 +12,15 @@ import { LayoutDashboard, Users, Building2, Package, Megaphone, MapPin, FileText
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { EscalaAdmin } from "./admin/FinanceiroAdmin";
-import GeradorEscala from "./admin/GeradorEscala";
-import FinanceiroHub from "./admin/FinanceiroHub";
-import ConfigAdmin from "./admin/ConfigAdmin";
-import ExecucoesView from "./admin/ExecucoesView";
-import ClientesLojasAdmin from "./admin/ClientesLojasAdmin";
-import { MonitoramentoPanel } from "@/components/MonitoramentoPanel";
 import { useRealtimeRefresh } from "@/hooks/useRealtimeRefresh";
+
+// Lazy-load das páginas pesadas para evitar travamento ao trocar de módulo
+const GeradorEscala = lazy(() => import("./admin/GeradorEscala"));
+const FinanceiroHub = lazy(() => import("./admin/FinanceiroHub"));
+const ConfigAdmin = lazy(() => import("./admin/ConfigAdmin"));
+const ExecucoesView = lazy(() => import("./admin/ExecucoesView"));
+const ClientesLojasAdmin = lazy(() => import("./admin/ClientesLojasAdmin"));
+const MonitoramentoPanel = lazy(() => import("@/components/MonitoramentoPanel").then(m => ({ default: m.MonitoramentoPanel })));
 
 const items = [
   { to: "/app", label: "Dashboard", icon: LayoutDashboard },
@@ -554,41 +556,42 @@ function PromotoresAdmin() {
 export default function AdminApp() {
   return (
     <DesktopLayout items={items} title="Painel Admin">
-      <Routes>
-        <Route index element={<AdminDashboard />} />
-        <Route path="promotores" element={<PromotoresAdmin />} />
-        <Route path="clientes-lojas" element={<ClientesLojasAdmin />} />
-        <Route path="clientes" element={<Navigate to="/app/clientes-lojas" replace />} />
-        <Route path="lojas" element={<Navigate to="/app/clientes-lojas" replace />} />
-        <Route path="rel-promotores" element={<Navigate to="/app/financeiro" replace />} />
-        <Route path="financeiro" element={<FinanceiroHub />} />
-        <Route path="escala" element={<EscalaAdmin />} />
-        <Route path="escala-auto" element={<GeradorEscala />} />
-        <Route path="produtos" element={<Navigate to="/app/execucoes" replace />} />
-        <Route path="validades" element={<Navigate to="/app/execucoes" replace />} />
-        <Route path="execucoes" element={<ExecucoesView />} />
-        <Route path="campanhas" element={
-          <CrudList title="Campanhas" table="campanhas" parentField="cliente_id"
-            columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "data_inicio", label: "Início" }, { key: "data_fim", label: "Fim" }, { key: "status", label: "Status" }]}
-            formFields={[
-              { key: "cliente_id", label: "Cliente", required: true },
-              { key: "nome", label: "Nome", required: true },
-              { key: "descricao", label: "Descrição" },
-              { key: "data_inicio", label: "Início", type: "date", required: true },
-              { key: "data_fim", label: "Fim", type: "date", required: true },
-              { key: "status", label: "Status", options: [{ value: "rascunho", label: "Rascunho" }, { value: "ativa", label: "Ativa" }, { value: "pausada", label: "Pausada" }, { value: "concluida", label: "Concluída" }] },
-            ]} />
-        } />
-        <Route path="monitoramento" element={<MonitoramentoPanel />} />
-        <Route path="mapa" element={<Navigate to="/app/monitoramento" replace />} />
-        <Route path="config" element={<ConfigAdmin />} />
-        <Route path="auditoria" element={<Navigate to="/app/financeiro" replace />} />
-        <Route path="relatorios" element={<Navigate to="/app/financeiro" replace />} />
-        <Route path="pagamentos" element={<Navigate to="/app/financeiro" replace />} />
-        <Route path="faturas" element={<Navigate to="/app/financeiro" replace />} />
-        <Route path="*" element={<Navigate to="/app" replace />} />
-
-      </Routes>
+      <Suspense fallback={<div className="p-8 text-center text-sm text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin inline mr-2" /> Carregando módulo…</div>}>
+        <Routes>
+          <Route index element={<AdminDashboard />} />
+          <Route path="promotores" element={<PromotoresAdmin />} />
+          <Route path="clientes-lojas" element={<ClientesLojasAdmin />} />
+          <Route path="clientes" element={<Navigate to="/app/clientes-lojas" replace />} />
+          <Route path="lojas" element={<Navigate to="/app/clientes-lojas" replace />} />
+          <Route path="rel-promotores" element={<Navigate to="/app/financeiro" replace />} />
+          <Route path="financeiro" element={<FinanceiroHub />} />
+          <Route path="escala" element={<EscalaAdmin />} />
+          <Route path="escala-auto" element={<GeradorEscala />} />
+          <Route path="produtos" element={<Navigate to="/app/execucoes" replace />} />
+          <Route path="validades" element={<Navigate to="/app/execucoes" replace />} />
+          <Route path="execucoes" element={<ExecucoesView />} />
+          <Route path="campanhas" element={
+            <CrudList title="Campanhas" table="campanhas" parentField="cliente_id"
+              columns={[{ key: "nome", label: "Nome" }, { key: "cliente", label: "Cliente" }, { key: "data_inicio", label: "Início" }, { key: "data_fim", label: "Fim" }, { key: "status", label: "Status" }]}
+              formFields={[
+                { key: "cliente_id", label: "Cliente", required: true },
+                { key: "nome", label: "Nome", required: true },
+                { key: "descricao", label: "Descrição" },
+                { key: "data_inicio", label: "Início", type: "date", required: true },
+                { key: "data_fim", label: "Fim", type: "date", required: true },
+                { key: "status", label: "Status", options: [{ value: "rascunho", label: "Rascunho" }, { value: "ativa", label: "Ativa" }, { value: "pausada", label: "Pausada" }, { value: "concluida", label: "Concluída" }] },
+              ]} />
+          } />
+          <Route path="monitoramento" element={<MonitoramentoPanel />} />
+          <Route path="mapa" element={<Navigate to="/app/monitoramento" replace />} />
+          <Route path="config" element={<ConfigAdmin />} />
+          <Route path="auditoria" element={<Navigate to="/app/financeiro" replace />} />
+          <Route path="relatorios" element={<Navigate to="/app/financeiro" replace />} />
+          <Route path="pagamentos" element={<Navigate to="/app/financeiro" replace />} />
+          <Route path="faturas" element={<Navigate to="/app/financeiro" replace />} />
+          <Route path="*" element={<Navigate to="/app" replace />} />
+        </Routes>
+      </Suspense>
     </DesktopLayout>
   );
 }

@@ -229,9 +229,11 @@ export type Database = {
           created_at: string
           email_contato: string | null
           id: string
+          marcas: string[]
           nome: string
           responsavel: string | null
           telefone: string | null
+          tipo_atendimento: string
           tipo_cobranca: string | null
           updated_at: string
           valor_diaria_cobrada: number | null
@@ -244,9 +246,11 @@ export type Database = {
           created_at?: string
           email_contato?: string | null
           id?: string
+          marcas?: string[]
           nome: string
           responsavel?: string | null
           telefone?: string | null
+          tipo_atendimento?: string
           tipo_cobranca?: string | null
           updated_at?: string
           valor_diaria_cobrada?: number | null
@@ -259,9 +263,11 @@ export type Database = {
           created_at?: string
           email_contato?: string | null
           id?: string
+          marcas?: string[]
           nome?: string
           responsavel?: string | null
           telefone?: string | null
+          tipo_atendimento?: string
           tipo_cobranca?: string | null
           updated_at?: string
           valor_diaria_cobrada?: number | null
